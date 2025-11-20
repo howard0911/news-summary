@@ -367,16 +367,16 @@ if __name__ == "__main__":
             except OSError:
                 port += 1
         return start_port  # 如果都不可用，返回原始端口
-        
+
     port = int(os.environ.get("PORT", 5000))
-    port = find_free_port(default_port)
-    if port != default_port:
-        print(f"⚠️  Port {default_port} is in use, using port {port} instead")
+    # port = find_free_port(default_port)
+    # if port != default_port:
+    #    print(f"⚠️  Port {default_port} is in use, using port {port} instead")
     
-    print(f"🚀 Starting Daily Digest Server...")
-    print(f"📍 Host: {host}")
-    print(f"🔌 Port: {port}")
-    print(f"🐛 Debug: {debug}")
-    print(f"🌐 Open: http://localhost:{port}")
+    # print(f"🚀 Starting Daily Digest Server...")
+    # print(f"📍 Host: {host}")
+    # print(f"🔌 Port: {port}")
+    # print(f"🐛 Debug: {debug}")
+    # print(f"🌐 Open: http://localhost:{port}")
     
     app.run(host="0.0.0.0", port=port, debug=debug)
