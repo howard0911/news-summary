@@ -10,5 +10,5 @@ COPY . .
 EXPOSE 5000
 ENV FLASK_DEBUG=False
 
-CMD ["sh", "-c", "gunicorn -w 4 -b 0.0.0.0:${PORT:-5000} backend.app:app"]
+CMD gunicorn -w 4 -b 0.0.0.0:$PORT backend.app:app
 
