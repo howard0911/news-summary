@@ -47,13 +47,8 @@ A local news summarization tool. After entering topics of interest and location,
       `台股 OR taiwan stocks when:1d`  
   - 這樣就算使用者用中文輸入主題，仍然能透過英文關鍵字提高命中率。
 
-- 🎨 **Gen Z 風格 UI + Dark Mode**  
-  - 使用 Inter 字體 + 卡片式佈局。  
+- 🎨 **Dark Mode**    
   - 支援 **Light / Dark Mode 切換**（右上角「🌙 / ☀️」）。  
-  - 適合拿來 Demo / Side Project 展示。
-
-- ⏳ **Loading Skeleton**  
-  - 送出表單後，新聞列表區顯示 skeleton shimmer，提供更好的載入體驗。
 
 - 📊 **News Analytics（新聞來源分析）**  
   - 自動統計目前結果中，新聞來源 domain（例如 `nytimes.com`, `bbc.com`）出現次數。  
@@ -65,26 +60,6 @@ A local news summarization tool. After entering topics of interest and location,
     - `Dockerfile`（搭配 `gunicorn`）  
     - `Procfile`（適用於 Heroku/Railway/Render 類平台）  
   - 環境變數控制 AI Provider、Ollama / OpenAI、Flask 參數。
-
----
-
-## 🧱 技術棧 Tech Stack
-
-### Backend
-
-- Flask  
-- Feedparser（解析 Google News RSS）  
-- BeautifulSoup（清理 HTML / 單篇新聞 fallback）  
-- Requests（對 Ollama / 外部 API 發 request）  
-- `openai` Python SDK（對 OpenAI 及 OpenAI 相容 API）  
-- `python-dotenv`（本機讀取 `.env`）
-
-### Frontend
-
-- 原生 HTML / CSS / JavaScript（單頁）  
-- 雙語 UI（英文 / 繁體中文）  
-- Dark Mode + Skeleton Loader + 簡易 bar chart analytics  
-- HTML Geolocation + Nominatim 反查國家
 
 ---
 
