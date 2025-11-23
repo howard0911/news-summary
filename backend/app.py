@@ -24,6 +24,8 @@ load_dotenv()
 AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/v1").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
@@ -188,7 +190,7 @@ def ask_llm(
             return "[OpenAI Error] OpenAI client not available"
         try:
             resp = client.chat.completions.create(
-                model=OLLAMA_MODEL,  # 可視需要改成真正的 OpenAI model 名稱
+                model=OPENAI_MODEL,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
