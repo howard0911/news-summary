@@ -41,13 +41,14 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 # OpenAI config (optional, used if Ollama not available)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 
 # Behavior:
 # - If local Ollama responds, use it.
 # - Otherwise fall back to OpenAI (if OPENAI_API_KEY available).
 # - You may force provider via ENV: AI_PROVIDER=ollama|openai|auto
 AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 
 def is_ollama_available(timeout: float = 1.0) -> bool:
@@ -95,7 +96,7 @@ def get_llm_provider() -> Dict:
     if AI_PROVIDER == "openai":
         client = get_openai_client()
         if client:
-            return {"provider": "openai", "client": client, "model": OLLAMA_MODEL}
+            return {"provider": "openai", "client": client, "model": OPENAI_MODEL}
         else:
             return {"provider": "none", "reason": "OPENAI_FORCED_but_no_api_key"}
 
@@ -104,7 +105,7 @@ def get_llm_provider() -> Dict:
         return {"provider": "ollama", "base_url": OLLAMA_URL, "model": OLLAMA_MODEL}
     client = get_openai_client()
     if client:
-        return {"provider": "openai", "client": client, "model": OLLAMA_MODEL}
+        return {"provider": "openai", "client": client, "model": OPENAI_MODEL}
     return {"provider": "none", "reason": "no_provider_available"}
 
 
@@ -171,7 +172,7 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
             if client:
                 try:
                     resp = client.chat.completions.create(
-                        model=provider.get("model", "gpt-4o-mini"),
+                        model=OPENAI_MODEL,
                         messages=messages,
                         max_tokens=max_tokens,
                         temperature=temperature,
@@ -186,7 +187,7 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
         client: OpenAI = provider["client"]
         try:
             resp = client.chat.completions.create(
-                model=provider.get("model", "gpt-4o-mini"),
+                model=OPENAI_MODEL,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
@@ -241,90 +242,6 @@ REGION_CONFIG: Dict[str, Dict[str, str]] = {
     "au": {"hl": "en-AU", "gl": "AU", "ceid": "AU:en", "name": "Australia"},
     "nz": {"hl": "en-NZ", "gl": "NZ", "ceid": "NZ:en", "name": "New Zealand"},
 }
-
-PRESET_RSS_FEEDS: Dict[str, Dict[str, str]] = {
-    "bbc_world": {
-        "label": "BBC News - World",
-        "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
-    },
-    "cnn_world": {
-        "label": "CNN.com - World",
-        "url": "http://rss.cnn.com/rss/edition_world.rss",
-    },
-    "cnbc_international": {
-        "label": "CNBC International: Top News",
-        "url": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
-    },
-    "ndtv_world": {
-        "label": "NDTV News - World",
-        "url": "http://feeds.feedburner.com/ndtvnews-world-news",
-    },
-    "nyt_world": {
-        "label": "NYT - World News",
-        "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    },
-    "google_top": {
-        "label": "Google News - Top stories",
-        "url": "https://news.google.com/rss",
-    },
-    "wapo_world": {
-        "label": "Washington Post - World",
-        "url": "http://feeds.washingtonpost.com/rss/world",
-    },
-    "reddit_worldnews": {
-        "label": "Reddit - r/worldnews",
-        "url": "https://www.reddit.com/r/worldnews/.rss",
-    },
-    "toi_world": {
-        "label": "Times of India - World",
-        "url": "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
-    },
-    "guardian_world": {
-        "label": "The Guardian - World news",
-        "url": "https://www.theguardian.com/world/rss",
-    },
-    "yahoo_news": {
-        "label": "Yahoo News - Latest",
-        "url": "https://www.yahoo.com/news/rss",
-    },
-    "huffpost_world": {
-        "label": "HuffPost - World News",
-        "url": "https://www.huffpost.com/section/world-news/feed",
-    },
-    "nyt_top": {
-        "label": "NYT - Top Stories",
-        "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-    },
-    "fox_news": {
-        "label": "FOX News - Latest",
-        "url": "http://feeds.foxnews.com/foxnews/latest",
-    },
-    "wsj_world": {
-        "label": "WSJ - World News",
-        "url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
-    },
-    "latimes_world": {
-        "label": "LA Times - World & Nation",
-        "url": "https://www.latimes.com/world-nation/rss2.0.xml",
-    },
-    "cnn_international": {
-        "label": "CNN - International Edition",
-        "url": "http://rss.cnn.com/rss/edition.rss",
-    },
-    "yahoo_mostviewed": {
-        "label": "Yahoo News - Most viewed",
-        "url": "https://news.yahoo.com/rss/mostviewed",
-    },
-    "cnbc_us": {
-        "label": "CNBC - US Top News",
-        "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
-    },
-    "politico_playbook": {
-        "label": "Politico - Playbook",
-        "url": "https://rss.politico.com/playbook.xml",
-    },
-}
-
 DEFAULT_REGION = REGION_CONFIG["us"]
 MAX_NEWS_COUNT = 15
 
@@ -359,59 +276,24 @@ def get_regions():
     return jsonify({"regions": regions})
 
 
-
 @app.get("/api/news")
 def get_news():
     topic = request.args.get("topic", "").strip() or "trending"
     region_key = request.args.get("region", "us").lower()
+    custom_url = request.args.get("customUrl", "").strip()
     lang = request.args.get("lang", "en").lower()
-    preset_id = (request.args.get("presetId") or "").strip()
 
     # validate region
     if region_key not in REGION_CONFIG:
         region_key = "us"
     region = REGION_CONFIG.get(region_key, DEFAULT_REGION)
 
-    # decide feed url priority: preset -> google news
-    feed_url = None
-    if preset_id and preset_id in PRESET_RSS_FEEDS:
-        feed_url = PRESET_RSS_FEEDS[preset_id]["url"]
-    else:
-        feed_url = build_google_news_feed(topic, region)
-
+    feed_url = custom_url or build_google_news_feed(topic, region)
     entries = fetch_feed_entries(feed_url)
 
     if not entries:
         error_msg = "無法取得新聞，請稍後再試" if lang.startswith("zh") else "Failed to fetch news, please try again later"
         return jsonify({"items": [], "error": error_msg}), 502
-
-    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
-
-    takeaway = None
-    # generate takeaway using LLM (will auto-switch)
-    try:
-        if news_items:
-            takeaway = generate_takeaway(news_items, lang)
-    except Exception as e:
-        print("LLM generate_takeaway error:", e)
-        takeaway = None
-
-    return jsonify({"items": news_items, "source": feed_url, "takeaway": takeaway})
-
-
-    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
-
-    takeaway = None
-    # generate takeaway using LLM (will auto-switch)
-    try:
-        if news_items:
-            takeaway = generate_takeaway(news_items, lang)
-    except Exception as e:
-        print("LLM generate_takeaway error:", e)
-        takeaway = None
-
-    return jsonify({"items": news_items, "source": feed_url, "takeaway": takeaway})
-
 
     news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
 
