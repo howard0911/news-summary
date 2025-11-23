@@ -1,5 +1,4 @@
-# Daily Digest – AI News Summarizer
-# AI 新聞每日摘要工具
+# Daily Digest – AI News Summarizer / AI 新聞每日摘要工具
 
 English | 中文
 
