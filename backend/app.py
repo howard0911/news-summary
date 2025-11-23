@@ -1,337 +1,496 @@
 import os
 import re
 import json
-from datetime import datetime, timezone
+import requests
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+from urllib.parse import quote_plus
 
-import requests
 import feedparser
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
 from openai import OpenAI
 
+app = Flask(__name__, static_folder="../public", static_url_path="")
+
 # ------------------------------
-# Env & basic config
+# Load environment variables
 # ------------------------------
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print("✅ Loaded environment variables from .env file")
+    else:
+        config_example = Path(__file__).parent.parent / "config.env.example"
+        if config_example.exists():
+            load_dotenv(config_example)
+            print("⚠️ Using config.env.example (please create .env file)")
+except ImportError:
+    print("⚠️ python-dotenv not installed, using system environment only")
 
-BASE_DIR = Path(__file__).resolve().parent
-PUBLIC_DIR = BASE_DIR.parent / "public"
-
-load_dotenv()
-
-AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/v1").rstrip("/")
+# ------------------------------
+# Config: Ollama and OpenAI
+# ------------------------------
+# Ollama local URL and default model (you confirmed these)
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-
+# OpenAI config (optional, used if Ollama not available)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
 
-FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
-FLASK_DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
-
-# Regions (ISO-3166-ish) config used both by backend & frontend
-REGIONS: List[Dict[str, str]] = [
-    {"code": "us", "name": "United States", "hl": "en-US", "gl": "US", "ceid": "US:en"},
-    {"code": "uk", "name": "United Kingdom", "hl": "en-GB", "gl": "GB", "ceid": "GB:en"},
-    {"code": "ca", "name": "Canada", "hl": "en-CA", "gl": "CA", "ceid": "CA:en"},
-    {"code": "au", "name": "Australia", "hl": "en-AU", "gl": "AU", "ceid": "AU:en"},
-    {"code": "tw", "name": "Taiwan", "hl": "zh-TW", "gl": "TW", "ceid": "TW:zh-Hant"},
-    {"code": "hk", "name": "Hong Kong", "hl": "zh-HK", "gl": "HK", "ceid": "HK:zh-Hant"},
-    {"code": "jp", "name": "Japan", "hl": "ja-JP", "gl": "JP", "ceid": "JP:ja"},
-    {"code": "kr", "name": "South Korea", "hl": "ko-KR", "gl": "KR", "ceid": "KR:ko"},
-    {"code": "sg", "name": "Singapore", "hl": "en-SG", "gl": "SG", "ceid": "SG:en"},
-    {"code": "in", "name": "India", "hl": "en-IN", "gl": "IN", "ceid": "IN:en"},
-    {"code": "de", "name": "Germany", "hl": "de-DE", "gl": "DE", "ceid": "DE:de"},
-    {"code": "fr", "name": "France", "hl": "fr-FR", "gl": "FR", "ceid": "FR:fr"},
-    {"code": "es", "name": "Spain", "hl": "es-ES", "gl": "ES", "ceid": "ES:es"},
-    {"code": "it", "name": "Italy", "hl": "it-IT", "gl": "IT", "ceid": "IT:it"},
-    {"code": "br", "name": "Brazil", "hl": "pt-BR", "gl": "BR", "ceid": "BR:pt"},
-    {"code": "mx", "name": "Mexico", "hl": "es-MX", "gl": "MX", "ceid": "MX:es"},
-    {"code": "id", "name": "Indonesia", "hl": "id-ID", "gl": "ID", "ceid": "ID:id"},
-    {"code": "th", "name": "Thailand", "hl": "th-TH", "gl": "TH", "ceid": "TH:th"},
-    {"code": "ph", "name": "Philippines", "hl": "en-PH", "gl": "PH", "ceid": "PH:en"},
-    {"code": "my", "name": "Malaysia", "hl": "en-MY", "gl": "MY", "ceid": "MY:en"},
-]
-
-DEFAULT_REGION = REGIONS[0]  # US
-
-app = Flask(__name__, static_folder=str(PUBLIC_DIR), static_url_path="")
-
-# ------------------------------
-# Helpers
-# ------------------------------
+# Behavior:
+# - If local Ollama responds, use it.
+# - Otherwise fall back to OpenAI (if OPENAI_API_KEY available).
+# - You may force provider via ENV: AI_PROVIDER=ollama|openai|auto
+AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
 
 
-def find_region(region: Optional[str]) -> Dict[str, str]:
-    """Find region config by ISO code or fuzzy name."""
-    if not region:
-        return DEFAULT_REGION
-    key = region.strip().lower()
-    # direct code
-    for r in REGIONS:
-        if r["code"].lower() == key:
-            return r
-    # fuzzy name
-    for r in REGIONS:
-        if key in r["name"].lower():
-            return r
-    # special mapping
-    if key in {"gb", "england"}:
-        return next((r for r in REGIONS if r["code"] == "uk"), DEFAULT_REGION)
-    return DEFAULT_REGION
-
-
-def clean_html(raw_html: str) -> str:
-    if not raw_html:
-        return ""
-    soup = BeautifulSoup(raw_html, "html.parser")
-    return soup.get_text(" ", strip=True)
-
-
-def is_ollama_available(timeout: float = 0.5) -> bool:
-    """Quick check if Ollama endpoint looks alive."""
-    if not OLLAMA_URL:
-        return False
+def is_ollama_available(timeout: float = 1.0) -> bool:
+    """Check whether Ollama local server appears to be running."""
     try:
+        # Query models endpoint (works for many Ollama setups)
         resp = requests.get(f"{OLLAMA_URL}/models", timeout=timeout)
-        return resp.status_code == 200
+        if resp.status_code == 200:
+            return True
+        # Some Ollama setups expose /v1 or root; try root quickly
+        resp2 = requests.get(OLLAMA_URL, timeout=timeout)
+        return resp2.status_code == 200
     except Exception:
         return False
 
 
-def get_openai_client() -> Optional[OpenAI]:
-    """Create OpenAI client if API key exists."""
+def get_openai_client():
+    """Lazy-create an OpenAI client if API key present."""
     if not OPENAI_API_KEY:
         return None
     try:
-        kwargs: Dict[str, str] = {"api_key": OPENAI_API_KEY}
-        if OPENAI_BASE_URL:
-            kwargs["base_url"] = OPENAI_BASE_URL
-        return OpenAI(**kwargs)
+        # Initialize OpenAI client with optional base_url
+        client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+        return client
     except Exception as e:
         print("Error initializing OpenAI client:", e)
         return None
 
 
+def get_llm_provider() -> Dict:
+    """
+    Decide which provider to use and return a descriptor dict:
+    {
+        'provider': 'ollama'|'openai'|'none',
+        ...provider-specific fields...
+    }
+    """
+    # If forced by env
+    if AI_PROVIDER == "ollama":
+        if is_ollama_available():
+            return {"provider": "ollama", "base_url": OLLAMA_URL, "model": OLLAMA_MODEL}
+        else:
+            return {"provider": "none", "reason": "OLLAMA_FORCED_but_unavailable"}
+
+    if AI_PROVIDER == "openai":
+        client = get_openai_client()
+        if client:
+            return {"provider": "openai", "client": client, "model": OLLAMA_MODEL}
+        else:
+            return {"provider": "none", "reason": "OPENAI_FORCED_but_no_api_key"}
+
+    # Auto mode: prefer Ollama if available, else OpenAI if key present
+    if is_ollama_available():
+        return {"provider": "ollama", "base_url": OLLAMA_URL, "model": OLLAMA_MODEL}
+    client = get_openai_client()
+    if client:
+        return {"provider": "openai", "client": client, "model": OLLAMA_MODEL}
+    return {"provider": "none", "reason": "no_provider_available"}
+
+
+# ------------------------------
+# Unified LLM call helper
+# ------------------------------
 def _parse_ollama_response(resp_json: Dict) -> str:
     """
-    Handle OpenAI-compatible Ollama responses, e.g.:
-    - {"choices":[{"message":{"content":"..."}}]}
+    Attempt to parse various Ollama response shapes.
+    Common shapes:
+    - {"choices":[{"message":{"content":"..."}}], ...}
+    - {"message":{"content":"..."}}
+    - {"choices":[{"content":"..."}]}
     """
     if not isinstance(resp_json, dict):
         return str(resp_json)
+    # Try choices -> message -> content
     try:
         choices = resp_json.get("choices")
-        if choices and isinstance(choices, list):
+        if choices and isinstance(choices, list) and len(choices) > 0:
             first = choices[0]
-            if isinstance(first, dict):
-                if "message" in first and isinstance(first["message"], dict):
-                    content = first["message"].get("content")
-                    if content:
-                        return str(content)
-                if "content" in first:
-                    return str(first["content"])
+            # nested message
+            if isinstance(first, dict) and "message" in first and isinstance(first["message"], dict):
+                return first["message"].get("content", "")
+            # direct content
+            if isinstance(first, dict) and "content" in first:
+                return first.get("content", "")
+        # fallback to top-level message.content
+        if "message" in resp_json and isinstance(resp_json["message"], dict):
+            return resp_json["message"].get("content", "")
     except Exception:
         pass
-    # fallback try message.content
-    message = resp_json.get("message")
-    if isinstance(message, dict) and message.get("content"):
-        return str(message["content"])
+    # last resort: return json dump
     return json.dumps(resp_json)
 
 
-def is_llm_error(text: Optional[str]) -> bool:
-    if not text:
-        return True
-    text = text.strip()
-    if not text:
-        return True
-    return text.startswith("[Error]") or text.startswith("[Ollama Error]") or text.startswith("[OpenAI Error]")
-
-
-def ask_llm(
-    messages: List[Dict[str, str]],
-    max_tokens: int = 512,
-    temperature: float = 0.7,
-    timeout: float = 20.0,
-) -> str:
+def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.7, timeout: float = 30.0) -> str:
     """
-    Unified LLM caller:
-    - If AI_PROVIDER=ollama → only Ollama
-    - If AI_PROVIDER=openai → only OpenAI
-    - If AI_PROVIDER=auto → try Ollama, then OpenAI
+    messages: list of {"role":"system|user|assistant", "content": "..."}
+    Returns: generated text (or error string starting with [Error])
     """
-    provider = AI_PROVIDER
+    provider = get_llm_provider()
 
-    def call_ollama() -> str:
-        if not is_ollama_available():
-            return "[Ollama Error] Ollama endpoint not available"
+    if provider["provider"] == "none":
+        return "[Error] No LLM provider available: " + provider.get("reason", "")
+
+    # ---------- Ollama ----------
+    if provider["provider"] == "ollama":
+        payload = {
+            "model": provider["model"],
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
         try:
-            payload = {
-                "model": OLLAMA_MODEL,
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            }
-            r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
+            r = requests.post(f"{provider['base_url']}/chat/completions", json=payload, timeout=timeout)
             r.raise_for_status()
-            return _parse_ollama_response(r.json())
+            resp_json = r.json()
+            return _parse_ollama_response(resp_json)
         except Exception as e:
+            # If Ollama fails, attempt fallback to OpenAI (if available)
+            print("Ollama request failed:", e)
+            client = get_openai_client()
+            if client:
+                try:
+                    resp = client.chat.completions.create(
+                        model=provider.get("model", "gpt-4o-mini"),
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                    return resp.choices[0].message.content
+                except Exception as oe:
+                    return f"[OpenAI Fallback Error] {oe}"
             return f"[Ollama Error] {e}"
 
-    def call_openai() -> str:
-        client = get_openai_client()
-        if not client:
-            return "[OpenAI Error] OpenAI client not available"
+    # ---------- OpenAI ----------
+    if provider["provider"] == "openai":
+        client: OpenAI = provider["client"]
         try:
             resp = client.chat.completions.create(
-                model=OPENAI_MODEL,
+                model=provider.get("model", "gpt-4o-mini"),
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            choice = resp.choices[0]
-            if choice.message and choice.message.content:
-                return str(choice.message.content)
-            return "[OpenAI Error] Empty completion"
+            return resp.choices[0].message.content
         except Exception as e:
+            print("OpenAI request failed:", e)
+            # Try Ollama as fallback if available
+            if is_ollama_available():
+                try:
+                    payload = {
+                        "model": OLLAMA_MODEL,
+                        "messages": messages,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                    }
+                    r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
+                    r.raise_for_status()
+                    return _parse_ollama_response(r.json())
+                except Exception as oe:
+                    return f"[OpenAI Error] {e} | [Ollama Fallback Error] {oe}"
             return f"[OpenAI Error] {e}"
 
-    # Provider routing
-    if provider == "ollama":
-        return call_ollama()
-    if provider == "openai":
-        return call_openai()
-
-    # auto
-    out = call_ollama()
-    if not is_llm_error(out):
-        return out
-    # try openai
-    out2 = call_openai()
-    if not is_llm_error(out2):
-        return out2
-    # both failed
-    return f"[Error] No provider responded successfully. Ollama={out} | OpenAI={out2}"
+    return "[Error] Unknown provider flow"
 
 
-SECTION_PATTERN_CACHE: Dict[str, re.Pattern] = {}
+# ------------------------------
+# Region config and feed helpers
+# ------------------------------
+REGION_CONFIG: Dict[str, Dict[str, str]] = {
+    # 亞洲
+    "tw": {"hl": "zh-TW", "gl": "TW", "ceid": "TW:zh-Hant", "name": "Taiwan"},
+    "hk": {"hl": "zh-HK", "gl": "HK", "ceid": "HK:zh-Hant", "name": "Hong Kong"},
+    "cn": {"hl": "zh-CN", "gl": "CN", "ceid": "CN:zh-Hans", "name": "China"},
+    "jp": {"hl": "ja", "gl": "JP", "ceid": "JP:ja", "name": "Japan"},
+    "kr": {"hl": "ko", "gl": "KR", "ceid": "KR:ko", "name": "South Korea"},
+    "sg": {"hl": "en-SG", "gl": "SG", "ceid": "SG:en", "name": "Singapore"},
+    "in": {"hl": "en-IN", "gl": "IN", "ceid": "IN:en", "name": "India"},
+    # 美洲
+    "us": {"hl": "en-US", "gl": "US", "ceid": "US:en", "name": "United States"},
+    "ca": {"hl": "en-CA", "gl": "CA", "ceid": "CA:en", "name": "Canada"},
+    "mx": {"hl": "es-MX", "gl": "MX", "ceid": "MX:es", "name": "Mexico"},
+    "br": {"hl": "pt-BR", "gl": "BR", "ceid": "BR:pt", "name": "Brazil"},
+    # 歐洲
+    "uk": {"hl": "en-GB", "gl": "GB", "ceid": "GB:en", "name": "United Kingdom"},
+    "de": {"hl": "de", "gl": "DE", "ceid": "DE:de", "name": "Germany"},
+    "fr": {"hl": "fr", "gl": "FR", "ceid": "FR:fr", "name": "France"},
+    "it": {"hl": "it", "gl": "IT", "ceid": "IT:it", "name": "Italy"},
+    "es": {"hl": "es", "gl": "ES", "ceid": "ES:es", "name": "Spain"},
+    "nl": {"hl": "nl", "gl": "NL", "ceid": "NL:nl", "name": "Netherlands"},
+    # 大洋洲
+    "au": {"hl": "en-AU", "gl": "AU", "ceid": "AU:en", "name": "Australia"},
+    "nz": {"hl": "en-NZ", "gl": "NZ", "ceid": "NZ:en", "name": "New Zealand"},
+}
+
+PRESET_RSS_FEEDS: Dict[str, Dict[str, str]] = {
+    "bbc_world": {
+        "label": "BBC News - World",
+        "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    },
+    "cnn_world": {
+        "label": "CNN.com - World",
+        "url": "http://rss.cnn.com/rss/edition_world.rss",
+    },
+    "cnbc_international": {
+        "label": "CNBC International: Top News",
+        "url": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
+    },
+    "ndtv_world": {
+        "label": "NDTV News - World",
+        "url": "http://feeds.feedburner.com/ndtvnews-world-news",
+    },
+    "nyt_world": {
+        "label": "NYT - World News",
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    },
+    "google_top": {
+        "label": "Google News - Top stories",
+        "url": "https://news.google.com/rss",
+    },
+    "wapo_world": {
+        "label": "Washington Post - World",
+        "url": "http://feeds.washingtonpost.com/rss/world",
+    },
+    "reddit_worldnews": {
+        "label": "Reddit - r/worldnews",
+        "url": "https://www.reddit.com/r/worldnews/.rss",
+    },
+    "toi_world": {
+        "label": "Times of India - World",
+        "url": "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
+    },
+    "guardian_world": {
+        "label": "The Guardian - World news",
+        "url": "https://www.theguardian.com/world/rss",
+    },
+    "yahoo_news": {
+        "label": "Yahoo News - Latest",
+        "url": "https://www.yahoo.com/news/rss",
+    },
+    "huffpost_world": {
+        "label": "HuffPost - World News",
+        "url": "https://www.huffpost.com/section/world-news/feed",
+    },
+    "nyt_top": {
+        "label": "NYT - Top Stories",
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+    },
+    "fox_news": {
+        "label": "FOX News - Latest",
+        "url": "http://feeds.foxnews.com/foxnews/latest",
+    },
+    "wsj_world": {
+        "label": "WSJ - World News",
+        "url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+    },
+    "latimes_world": {
+        "label": "LA Times - World & Nation",
+        "url": "https://www.latimes.com/world-nation/rss2.0.xml",
+    },
+    "cnn_international": {
+        "label": "CNN - International Edition",
+        "url": "http://rss.cnn.com/rss/edition.rss",
+    },
+    "yahoo_mostviewed": {
+        "label": "Yahoo News - Most viewed",
+        "url": "https://news.yahoo.com/rss/mostviewed",
+    },
+    "cnbc_us": {
+        "label": "CNBC - US Top News",
+        "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    },
+    "politico_playbook": {
+        "label": "Politico - Playbook",
+        "url": "https://rss.politico.com/playbook.xml",
+    },
+}
+
+DEFAULT_REGION = REGION_CONFIG["us"]
+MAX_NEWS_COUNT = 15
 
 
-def extract_section(text: str, title: str) -> Optional[str]:
+@app.route("/")
+def serve_index():
+    return send_from_directory(app.static_folder, "index.html")
+
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/api/test-llm")
+def test_llm():
     """
-    Extract content between a header like:
-    【Title】
-    ...
-    next header or end
+    Test the active LLM provider by running a tiny prompt.
+    Response returns the provider decision and the LLM reply.
     """
-    if not text:
-        return None
-    key = title.lower()
-    if key not in SECTION_PATTERN_CACHE:
-        pattern = re.compile(
-            rf"【\s*{re.escape(title)}\s*】(.*?)(?=【|$)",
-            re.IGNORECASE | re.DOTALL,
-        )
-        SECTION_PATTERN_CACHE[key] = pattern
-    m = SECTION_PATTERN_CACHE[key].search(text)
-    if not m:
-        return None
-    return m.group(1).strip()
+    provider = get_llm_provider()
+    test_prompt = [{"role": "user", "content": "Say: test"}]
+    reply = ask_llm(test_prompt, max_tokens=10)
+    return jsonify({"provider": provider.get("provider"), "reply": reply})
 
 
-def contains_cjk(text: str) -> bool:
-    """Return True if the string contains CJK characters (e.g., Chinese)."""
-    if not text:
-        return False
-    return bool(re.search(r"[\u4e00-\u9fff]", text))
+@app.get("/api/regions")
+def get_regions():
+    regions = []
+    for key, config in REGION_CONFIG.items():
+        regions.append({"code": key, "name": config.get("name", key.upper())})
+    return jsonify({"regions": regions})
 
 
-def expand_topic_with_translation(topic: str, region_code: Optional[str] = None) -> str:
-    """If topic contains CJK, ask LLM for English keywords and build a combined query."""
-    topic = (topic or "").strip()
-    if not topic:
-        return "trending"
 
-    # If no CJK, just return original topic
-    if not contains_cjk(topic):
-        return topic
+@app.get("/api/news")
+def get_news():
+    topic = request.args.get("topic", "").strip() or "trending"
+    region_key = request.args.get("region", "us").lower()
+    lang = request.args.get("lang", "en").lower()
+    preset_id = (request.args.get("presetId") or "").strip()
 
-    region_cfg = find_region(region_code) if region_code else DEFAULT_REGION
-    region_name = region_cfg["name"]
+    # validate region
+    if region_key not in REGION_CONFIG:
+        region_key = "us"
+    region = REGION_CONFIG.get(region_key, DEFAULT_REGION)
 
-    system_prompt = (
-        "You are a bilingual assistant that helps map non-English news topics "
-        "to effective English search keywords for Google News."
+    # decide feed url priority: preset -> google news
+    feed_url = None
+    if preset_id and preset_id in PRESET_RSS_FEEDS:
+        feed_url = PRESET_RSS_FEEDS[preset_id]["url"]
+    else:
+        feed_url = build_google_news_feed(topic, region)
+
+    entries = fetch_feed_entries(feed_url)
+
+    if not entries:
+        error_msg = "無法取得新聞，請稍後再試" if lang.startswith("zh") else "Failed to fetch news, please try again later"
+        return jsonify({"items": [], "error": error_msg}), 502
+
+    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
+
+    takeaway = None
+    # generate takeaway using LLM (will auto-switch)
+    try:
+        if news_items:
+            takeaway = generate_takeaway(news_items, lang)
+    except Exception as e:
+        print("LLM generate_takeaway error:", e)
+        takeaway = None
+
+    return jsonify({"items": news_items, "source": feed_url, "takeaway": takeaway})
+
+
+    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
+
+    takeaway = None
+    # generate takeaway using LLM (will auto-switch)
+    try:
+        if news_items:
+            takeaway = generate_takeaway(news_items, lang)
+    except Exception as e:
+        print("LLM generate_takeaway error:", e)
+        takeaway = None
+
+    return jsonify({"items": news_items, "source": feed_url, "takeaway": takeaway})
+
+
+    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
+
+    takeaway = None
+    # generate takeaway using LLM (will auto-switch)
+    try:
+        if news_items:
+            takeaway = generate_takeaway(news_items, lang)
+    except Exception as e:
+        print("LLM generate_takeaway error:", e)
+        takeaway = None
+
+    return jsonify({"items": news_items, "source": feed_url, "takeaway": takeaway})
+
+
+def build_google_news_feed(topic: str, region: Dict[str, str]) -> str:
+    encoded_topic = quote_plus(topic)
+    return (
+        "https://news.google.com/rss/search?q="
+        f"{encoded_topic}+when:1d&hl={region['hl']}&gl={region['gl']}&ceid={region['ceid']}"
     )
-    user_prompt = f"""The user entered a news topic (possibly in Chinese or another language):
-
-"{topic}"
-
-This topic is for the region: {region_name}.
-
-Please propose 1-2 very short English search keywords that would work well for a Google News query about this topic.
-Return ONLY the keywords as a comma-separated list, without any explanations, numbering, or extra text.
-Example: elections, us politics"""
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
-
-    out = ask_llm(messages, max_tokens=64, temperature=0.3)
-    if is_llm_error(out):
-        # fall back to original topic if translation fails
-        return topic
-
-    # Parse comma / newline separated keywords
-    parts = re.split(r"[,，\n]+", out)
-    keywords = []
-    for p in parts:
-        kw = p.strip()
-        if kw:
-            keywords.append(kw)
-
-    if not keywords:
-        return topic
-
-    # Limit to at most 2 keywords to keep query short & robust
-    keywords = keywords[:2]
-
-    # Combine original topic + English keywords using OR
-    combined = topic + " OR " + " OR ".join(keywords)
-    return combined
 
 
-def generate_takeaway(news_items: List[Dict], region_code: Optional[str] = None) -> Optional[Dict[str, Dict[str, str]]]:
-    """
-    Generate bilingual summary:
-    {
-      "en": {"things_to_watch": "...", "takeaway": "..."},
-      "zh": {"things_to_watch": "...", "takeaway": "..."}
-    }
-    """
-    if not news_items:
-        return None
+def fetch_feed_entries(feed_url: str) -> List[feedparser.FeedParserDict]:
+    parsed = feedparser.parse(feed_url)
+    if parsed.bozo:
+        return []
+    entries = parsed.entries
+    # sort by published time (most recent first)
+    entries.sort(key=lambda x: (x.get("published_parsed") or (1970, 1, 1, 0, 0, 0, 0, 0, 0)), reverse=True)
+    return entries
 
+
+def serialize_entry(entry: feedparser.FeedParserDict) -> Dict[str, Optional[str]]:
+    published = normalize_published(entry)
+    return {"title": entry.get("title", "(無標題)"), "link": entry.get("link"), "published": published}
+
+
+def sanitize_html(raw_html: str) -> str:
+    soup = BeautifulSoup(raw_html, "html.parser")
+    text = soup.get_text(separator=" ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def normalize_published(entry: feedparser.FeedParserDict) -> Optional[str]:
+    if "published_parsed" in entry and entry.published_parsed:
+        dt = datetime(*entry.published_parsed[:6])
+        return dt.strftime("%Y-%m-%d %H:%M")
+    return entry.get("published")
+
+
+def generate_takeaway(news_items: List[Dict], lang: str = "zh") -> Optional[Dict[str, str]]:
+    """Generate a short summary/takeaway using the configured LLM provider."""
     titles = [item["title"] for item in news_items[:10]]
-    news_text = "\n".join(f"{idx+1}. {t}" for idx, t in enumerate(titles))
+    news_text = "\n".join([f"{i+1}. {t}" for i, t in enumerate(titles)])
 
-    region_cfg = find_region(region_code) if region_code else DEFAULT_REGION
-    region_name = region_cfg["name"]
-
-    # Step 1: English summary
-    system_prompt_en = "You are a professional news analyst skilled at extracting key insights from multiple news articles."
-    user_prompt_en = f"""Here are today's latest news headlines (for region: {region_name}):
+    if lang.startswith("zh"):
+        system_prompt = "你是一位專業的新聞分析師，擅長從多則新聞中提取關鍵洞察。"
+        user_prompt = f"""以下是今天最新的新聞標題：
 
 {news_text}
 
-Please focus on what matters for people in {region_name}.
+請根據這些新聞標題，為我總結：
+1. 今天需要注意的事情（2-3個重點，每點簡潔明瞭）
+2. 一個關鍵的 take away（一句話總結最重要的洞察）
+
+請用繁體中文回答，格式如下：
+【今天需要注意的事情】
+1. ...
+2. ...
+3. ...
+
+【Take Away】
+..."""
+    else:
+        system_prompt = "You are a professional news analyst skilled at extracting key insights from multiple news articles."
+        user_prompt = f"""Here are today's latest news headlines:
+
+{news_text}
 
 Please summarize based on these headlines:
 1. Things to watch today (2-3 key points, concise and clear)
@@ -346,204 +505,54 @@ Please respond in English in the following format:
 【Take Away】
 ..."""
 
-    messages_en = [
-        {"role": "system", "content": system_prompt_en},
-        {"role": "user", "content": user_prompt_en},
-    ]
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
-    out_en = ask_llm(messages_en, max_tokens=500, temperature=0.7)
-    if is_llm_error(out_en):
-        return {"error": out_en}
-
-    things_en = extract_section(out_en, "Things to Watch Today")
-    takeaway_en = extract_section(out_en, "Take Away")
-
-    en_payload = {
-        "things_to_watch": (things_en or out_en or "").strip(),
-        "takeaway": (takeaway_en or out_en or "").strip(),
-    }
-
-    # Step 2: translate to Traditional Chinese
-    system_prompt_zh = "你是一位專業的新聞翻譯與摘要助手，擅長將英文新聞摘要翻譯成精準的繁體中文。"
-    user_prompt_zh = f"""請將以下英文摘要翻譯成精準、自然的繁體中文，保留原本的結構與段落格式。
-
-請使用以下格式輸出：
-
-【今天需要注意的事情】
-1. ...
-2. ...
-3. ...
-
-【Take Away】
-...
-
-以下是英文內容：
-
-{out_en}
-"""
-
-    messages_zh = [
-        {"role": "system", "content": system_prompt_zh},
-        {"role": "user", "content": user_prompt_zh},
-    ]
-
-    out_zh = ask_llm(messages_zh, max_tokens=600, temperature=0.7)
-    if is_llm_error(out_zh):
-        zh_payload = {
-            "things_to_watch": "",
-            "takeaway": out_zh,
-        }
-    else:
-        things_zh = extract_section(out_zh, "今天需要注意的事情")
-        takeaway_zh = extract_section(out_zh, "Take Away")
-        zh_payload = {
-            "things_to_watch": (things_zh or out_zh or "").strip(),
-            "takeaway": (takeaway_zh or out_zh or "").strip(),
-        }
-
-    return {
-        "en": en_payload,
-        "zh": zh_payload,
-    }
-
-
-# ------------------------------
-# RSS / News helpers
-# ------------------------------
-
-
-def build_google_news_url(topic: str, region_code: str) -> str:
-    region_cfg = find_region(region_code)
-    hl = region_cfg["hl"]
-    gl = region_cfg["gl"]
-    ceid = region_cfg["ceid"]
-    # If topic contains CJK, expand it with English translations to improve recall
-    processed_topic = expand_topic_with_translation(topic, region_code)
-    # Add when:1d to bias toward last 24 hours
-    query = f"{processed_topic} when:1d"
-    return (
-        "https://news.google.com/rss/search?"
-        f"q={requests.utils.quote(query)}&hl={hl}&gl={gl}&ceid={ceid}"
-    )
-
-
-def parse_feed(url: str, max_items: int = 15) -> List[Dict]:
-    """Parse RSS feed. If it's not a real feed, try to treat it as a single-article page."""
-    feed = feedparser.parse(url)
-    items: List[Dict] = []
-
-    # Case 1: normal RSS feed
-    if getattr(feed, "entries", None):
-        for entry in feed.entries[:max_items]:
-            title = entry.get("title", "").strip()
-            link = entry.get("link", "").strip()
-            summary = clean_html(entry.get("summary", "") or entry.get("description", ""))
-            published = entry.get("published", "") or entry.get("updated", "")
-            source = ""
-            if "source" in entry and getattr(entry.source, "title", None):
-                source = entry.source.title
-            items.append(
-                {
-                    "title": title,
-                    "link": link,
-                    "summary": summary,
-                    "published": published,
-                    "source": source,
-                }
-            )
-        return items
-
-    # Case 2: Not RSS or empty RSS -> treat as single article
-    try:
-        resp = requests.get(url, timeout=6)
-        resp.raise_for_status()
-    except Exception:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    title_tag = soup.find("title")
-    title = title_tag.get_text(strip=True) if title_tag else url
-
-    desc_tag = soup.find("meta", attrs={"name": "description"})
-    summary = desc_tag.get("content", "").strip() if desc_tag else ""
-
-    items.append(
-        {
-            "title": title,
-            "link": url,
-            "summary": summary,
-            "published": "",
-            "source": "",
-        }
-    )
-    return items
-
-
-# ------------------------------
-# Routes
-# ------------------------------
-
-
-@app.route("/")
-def index():
-    # Serve index.html from public folder
-    if PUBLIC_DIR.exists():
-        return send_from_directory(PUBLIC_DIR, "index.html")
-    # Fallback: try same folder
-    return send_from_directory(BASE_DIR, "index.html")
-
-
-@app.route("/api/regions")
-def api_regions():
-    return jsonify({"regions": [{"code": r["code"], "name": r["name"]} for r in REGIONS]})
-
-
-@app.route("/api/news")
-def api_news():
-    topic = request.args.get("topic", "").strip() or "trending"
-    region_param = request.args.get("region", "").strip().lower()
-    custom_url = request.args.get("customUrl", "").strip()
-    # frontend still passes 'lang', but backend now always generates both en & zh
-    _frontend_lang = request.args.get("lang", "en")
-
-    region_cfg = find_region(region_param or DEFAULT_REGION["code"])
-
-    try:
-        if custom_url:
-            feed_url = custom_url
+    out = ask_llm(messages, max_tokens=500, temperature=0.7)
+    if out and not out.startswith("[Error]") and not out.startswith("[Ollama Error]") and not out.startswith("[OpenAI Error]"):
+        # Try to parse sections
+        if lang.startswith("zh"):
+            things_to_watch = extract_section(out, "今天需要注意的事情")
+            takeaway = extract_section(out, "Take Away")
         else:
-            feed_url = build_google_news_url(topic, region_cfg["code"])
-
-        items = parse_feed(feed_url, max_items=15)
-
-        takeaway = None
-        ai_error = None
-        if items:
-            try:
-                raw_takeaway = generate_takeaway(items, region_cfg["code"])
-                if isinstance(raw_takeaway, dict) and "error" in raw_takeaway:
-                    ai_error = raw_takeaway.get("error")
-                else:
-                    takeaway = raw_takeaway
-            except Exception as e:
-                ai_error = str(e)
-
-        return jsonify(
-            {
-                "items": items,
-                "source": feed_url,
-                "takeaway": takeaway,
-                "ai_error": ai_error,
-            }
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            things_to_watch = extract_section(out, "Things to Watch Today")
+            takeaway = extract_section(out, "Take Away")
+        return {"things_to_watch": things_to_watch or out, "takeaway": takeaway or out}
+    return {"things_to_watch": out, "takeaway": out}
 
 
-# ------------------------------
-# Entrypoint
-# ------------------------------
+def extract_section(text: str, section_name: str) -> Optional[str]:
+    patterns = [
+        rf"【{section_name}】\s*(.*?)(?=【|$)",
+        rf"\[{section_name}\]\s*(.*?)(?=\[|$)",
+        rf"{section_name}:\s*(.*?)(?=\n\n|$)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+    return None
+
 
 if __name__ == "__main__":
-    # For local dev, honour FLASK_HOST / FLASK_PORT
-    app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG)
+    import socket
+
+    host = os.getenv("FLASK_HOST", "0.0.0.0")
+    default_port = int(os.getenv("FLASK_PORT", "5001"))
+    debug = os.getenv("FLASK_DEBUG", "True").lower() == "true"
+
+    def find_free_port(start_port):
+        port = start_port
+        max_attempts = 10
+        for _ in range(max_attempts):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                sock.bind(("", port))
+                sock.close()
+                return port
+            except OSError:
+                port += 1
+        return start_port
+
+    port = int(os.environ.get("PORT", 5000))
+    print("Current PORT:", os.getenv("PORT"))
+    app.run(host=host, port=port, debug=debug)

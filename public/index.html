@@ -2,18 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Daily Digest</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>"
-    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>" />
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
+      
       :root {
         --bg: #ffffff;
         --bg-secondary: #f8f9fa;
@@ -30,20 +24,6 @@
         --error: #ef4444;
       }
 
-      /* Dark Mode */
-      body.dark {
-        --bg: #020617;
-        --bg-secondary: #020617;
-        --text: #e5e7eb;
-        --text-secondary: #9ca3af;
-        --text-muted: #6b7280;
-        --border: #1f2937;
-        --border-light: #111827;
-        --primary: #f9fafb;
-        --accent: #6366f1;
-        --accent-light: #1d253b;
-      }
-
       * {
         margin: 0;
         padding: 0;
@@ -58,7 +38,6 @@
         min-height: 100vh;
         font-weight: 400;
         -webkit-font-smoothing: antialiased;
-        transition: background 0.25s ease, color 0.25s ease;
       }
 
       .lang-toggle {
@@ -68,29 +47,28 @@
         z-index: 100;
         display: flex;
         gap: 0.5rem;
-        background: var(--bg);
+        background: white;
         padding: 0.5rem;
-        border-radius: 999px;
+        border-radius: 12px;
         border: 1px solid var(--border);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
 
       .lang-btn {
-        padding: 0.4rem 0.9rem;
+        padding: 0.5rem 1rem;
         background: transparent;
         border: none;
         color: var(--text-secondary);
         cursor: pointer;
-        border-radius: 999px;
+        border-radius: 8px;
         font-weight: 500;
-        font-size: 0.8rem;
+        font-size: 0.875rem;
         transition: all 0.2s;
       }
 
       .lang-btn.active {
         background: var(--primary);
-        color: var(--bg);
+        color: white;
       }
 
       .lang-btn:hover:not(.active) {
@@ -98,26 +76,14 @@
         color: var(--text);
       }
 
-      .theme-btn {
-        padding: 0.35rem 0.6rem;
-        border-radius: 999px;
-        border: none;
-        background: var(--bg-secondary);
-        cursor: pointer;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
       header {
         text-align: center;
-        padding: 4.5rem 1.5rem 2.5rem;
+        padding: 3rem 1.5rem 2rem;
         background: var(--bg);
       }
 
       header h1 {
-        font-size: clamp(2.5rem, 6vw, 3.7rem);
+        font-size: clamp(2.5rem, 6vw, 4rem);
         font-weight: 700;
         margin-bottom: 1rem;
         color: var(--text);
@@ -125,23 +91,23 @@
       }
 
       header p {
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         color: var(--text-secondary);
         font-weight: 400;
-        max-width: 620px;
+        max-width: 600px;
         margin: 0 auto;
       }
 
       main {
-        max-width: 900px;
+        max-width: 800px;
         margin: 0 auto;
-        padding: 0 1.5rem 3rem;
+        padding: 0 1.5rem 2rem;
       }
 
       .card {
-        background: var(--bg);
+        background: white;
         border-radius: 20px;
-        padding: 1.75rem;
+        padding: 1.5rem;
         margin-bottom: 1.5rem;
         border: 1px solid var(--border);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -155,16 +121,14 @@
         font-size: 0.95rem;
       }
 
-      input,
-      select,
-      textarea {
+      input, select, textarea {
         width: 100%;
         padding: 0.75rem 1rem;
         border-radius: 12px;
         border: 1.5px solid var(--border);
         background: var(--bg);
         color: var(--text);
-        font-size: 0.95rem;
+        font-size: 1rem;
         margin-bottom: 1rem;
         transition: all 0.2s;
         font-family: inherit;
@@ -172,47 +136,9 @@
       }
 
       textarea {
-        min-height: 44px;
+        min-height: 80px;
         resize: vertical;
-        line-height: 1.5;
-      }
-
-      input:focus,
-      select:focus,
-      textarea:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
-      }
-
-      input::placeholder,
-      textarea::placeholder {
-        color: var(--text-muted);
-      }
-
-      button {
-        width: 100%;
-        padding: 0.9rem 1.5rem;
-        border-radius: 12px;
-        border: none;
-        font-size: 0.95rem;
-        font-weight: 600;
-        background: var(--primary);
-        color: var(--bg);
-        cursor: pointer;
-        transition: all 0.2s;
-        font-family: inherit;
-      }
-
-      button:hover {
-        background: #111827;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-      }
-
-      button:active {
-        transform: translateY(0);
-        box-shadow: none;
+        line-height: 1.6;
       }
 
       .address-input-wrapper {
@@ -236,70 +162,62 @@
         box-sizing: border-box;
       }
 
-      .helper-text {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-top: -0.4rem;
-        margin-bottom: 1rem;
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
       }
 
-      .location-detect-btn {
-        padding: 0.75rem 0.875rem;
+      input::placeholder, textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem 1.5rem;
         border-radius: 12px;
-        border: 1.5px solid var(--border);
-        background: var(--bg-secondary);
-        color: var(--text);
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        background: var(--primary);
+        color: white;
         cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 500;
         transition: all 0.2s;
         font-family: inherit;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        white-space: nowrap;
-        flex-shrink: 0;
-        align-self: stretch;
-        order: 1;
-        min-width: auto;
-        width: auto !important;
-        max-width: fit-content;
-        box-sizing: border-box;
-        height: 100%;
       }
 
-      .location-detect-btn:hover {
-        background: var(--border);
-        border-color: var(--primary);
+      button:hover {
+        background: #333;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
 
-      .location-detect-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+      button:active {
+        transform: translateY(0);
       }
 
       .takeaway-section {
         background: var(--bg-secondary);
-        padding: 1.75rem;
-        border-radius: 18px;
-        margin-bottom: 1.5rem;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
         border: 1px solid var(--border);
       }
 
       .takeaway-section h2 {
-        font-size: 1.35rem;
-        margin-bottom: 1.25rem;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
         font-weight: 600;
         color: var(--text);
       }
 
       .things-to-watch {
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
       }
 
       .things-to-watch h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.8rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
         color: var(--text);
         font-weight: 500;
       }
@@ -310,31 +228,31 @@
       }
 
       .things-to-watch li {
-        padding: 0.6rem 0.85rem;
-        margin-bottom: 0.45rem;
-        background: var(--bg);
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        background: white;
         border-radius: 10px;
         border-left: 3px solid var(--accent);
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         line-height: 1.6;
       }
 
       .takeaway-box {
-        background: var(--bg);
-        padding: 1.25rem;
+        background: white;
+        padding: 1.5rem;
         border-radius: 12px;
         border: 1px solid var(--border);
       }
 
       .takeaway-box h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.6rem;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
         font-weight: 600;
         color: var(--text);
       }
 
       .takeaway-box p {
-        font-size: 0.95rem;
+        font-size: 1rem;
         line-height: 1.7;
         color: var(--text);
       }
@@ -346,72 +264,8 @@
         padding: 1rem 1.5rem;
         border-radius: 12px;
         text-align: center;
-        margin-bottom: 1.5rem;
-        font-size: 0.85rem;
-      }
-
-      .status {
-        text-align: center;
-        padding: 1.25rem;
-        color: var(--text-secondary);
+        margin-bottom: 2rem;
         font-size: 0.95rem;
-      }
-
-      .error {
-        color: var(--error);
-        background: #fef2f2;
-        padding: 1.25rem;
-        border-radius: 12px;
-        border: 1px solid #fecaca;
-        text-align: center;
-        font-size: 0.9rem;
-      }
-
-      /* Skeleton loader */
-      .news-skeleton {
-        display: grid;
-        gap: 0.75rem;
-      }
-
-      .skeleton-item {
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        border: 1px solid var(--border);
-        background: var(--bg-secondary);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .skeleton-line {
-        height: 0.85rem;
-        border-radius: 999px;
-        background: var(--border-light);
-        margin-bottom: 0.5rem;
-        width: 80%;
-      }
-
-      .skeleton-line.short {
-        width: 50%;
-      }
-
-      .skeleton-item::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.2),
-          transparent
-        );
-        transform: translateX(-100%);
-        animation: shimmer 1.6s infinite;
-      }
-
-      @keyframes shimmer {
-        100% {
-          transform: translateX(100%);
-        }
       }
 
       .news-list {
@@ -420,10 +274,10 @@
       }
 
       .news-item {
-        background: var(--bg);
+        background: white;
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 0.9rem 1.25rem;
+        padding: 1rem 1.25rem;
         transition: all 0.2s;
         display: flex;
         align-items: center;
@@ -438,7 +292,7 @@
       }
 
       .news-item h3 {
-        font-size: 0.9rem;
+        font-size: 0.875rem;
         font-weight: 500;
         margin: 0;
         flex: 1;
@@ -456,7 +310,7 @@
         color: var(--accent);
       }
 
-      .link-icon {
+      .news-item .link-icon {
         color: var(--text-muted);
         font-size: 1rem;
         transition: all 0.2s;
@@ -468,46 +322,93 @@
         transform: translateX(2px);
       }
 
-      /* Analytics */
-      .analytics-card {
-        margin-top: 0.5rem;
+      .status {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+        font-size: 1rem;
       }
 
-      .chart-row {
+      .error {
+        color: var(--error);
+        background: #fef2f2;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #fecaca;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+      }
+
+      .loading::after {
+        content: '...';
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+
+      @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+      }
+
+      .address-input-group {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .address-input-group textarea {
+        margin-bottom: 0;
+      }
+
+      .helper-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .location-detect-btn {
+        padding: 0.75rem 0.875rem;
+        border-radius: 12px;
+        border: 1.5px solid var(--border);
+        background: var(--bg-secondary);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        font-family: inherit;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.55rem;
-      }
-
-      .chart-label {
-        flex: 0 0 140px;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        overflow: hidden;
-        text-overflow: ellipsis;
+        gap: 0.5rem;
         white-space: nowrap;
-      }
-
-      .chart-bar-wrapper {
-        flex: 1;
-        background: var(--bg-secondary);
-        border-radius: 999px;
-        overflow: hidden;
-        height: 0.6rem;
-      }
-
-      .chart-bar {
+        flex-shrink: 0;
+        align-self: stretch;
+        order: 1;
+        min-width: auto;
+        width: auto;
+        max-width: fit-content;
+        box-sizing: border-box;
         height: 100%;
-        background: var(--accent);
-        border-radius: 999px;
+      }
+      
+      button.location-detect-btn {
+        width: auto !important;
       }
 
-      .chart-value {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        min-width: 1.5rem;
-        text-align: right;
+      .location-detect-btn:hover {
+        background: var(--border);
+        border-color: var(--primary);
+      }
+
+      .location-detect-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       @media (max-width: 768px) {
@@ -517,15 +418,11 @@
         }
 
         header {
-          padding: 4rem 1rem 2.5rem;
+          padding: 4rem 1rem 3rem;
         }
 
         .card {
           padding: 1.5rem;
-        }
-
-        .chart-label {
-          flex-basis: 100px;
         }
 
         .news-item {
@@ -534,7 +431,7 @@
         }
 
         .news-item h3 {
-          margin-bottom: 0.4rem;
+          margin-bottom: 0.5rem;
         }
       }
     </style>
@@ -543,22 +440,18 @@
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="en">English</button>
       <button class="lang-btn" data-lang="zh">中文</button>
-      <button class="theme-btn" id="themeToggle">🌙</button>
     </div>
 
     <header>
       <h1 data-i18n="title">📰 Daily Digest</h1>
-      <p data-i18n="subtitle">Get your personalized news summary in seconds</p>
+      <p data-i18n="subtitle">Get your daily news summary in seconds</p>
     </header>
 
     <main>
-      <!-- Form card -->
       <section class="card">
         <form id="interestForm">
           <div>
-            <label for="topic" data-i18n="topic-label">
-              What news topics interest you?
-            </label>
+            <label for="topic" data-i18n="topic-label">What news topics interest you?</label>
             <input
               id="topic"
               name="topic"
@@ -569,16 +462,60 @@
           </div>
 
           <div>
-            <label for="address" data-i18n="address-label">
-              Location (City, State/Province, Country)
-            </label>
+            <label for="presetSource">Source (optional)</label>
+            <select id="presetSource" name="presetSource">
+              <option value="">🌐 Google News (default)</option>
+              <option value="bbc_world">BBC News - World</option>
+              <option value="cnn_world">CNN - World</option>
+              <option value="cnn_international">CNN - International Edition</option>
+              <option value="nyt_world">NYT - World News</option>
+              <option value="nyt_top">NYT - Top Stories</option>
+              <option value="guardian_world">The Guardian - World</option>
+              <option value="wapo_world">Washington Post - World</option>
+              <option value="wsj_world">WSJ - World News</option>
+              <option value="latimes_world">LA Times - World &amp; Nation</option>
+              <option value="cnbc_international">CNBC International</option>
+              <option value="cnbc_us">CNBC - US Top News</option>
+              <option value="yahoo_news">Yahoo News - Latest</option>
+              <option value="yahoo_mostviewed">Yahoo News - Most viewed</option>
+              <option value="huffpost_world">HuffPost - World News</option>
+              <option value="fox_news">FOX News - Latest</option>
+              <option value="toi_world">Times of India - World</option>
+              <option value="ndtv_world">NDTV - World News</option>
+              <option value="reddit_worldnews">Reddit - r/worldnews</option>
+              <option value="google_top">Google News - Top stories</option>
+              <option value="politico_playbook">Politico - Playbook</option>
+            </select>
+            <p class="helper-text">
+              Leave as default to use Google News by topic &amp; region, or choose a specific news site.
+            </p>
+          </div>
+          <div class="favorites-block">
+            <label for="favoriteSelect">My favorite combos</label>
+            <div class="favorite-row">
+              <select id="favoriteSelect" class="favorite-select">
+                <option value="">-- None --</option>
+              </select>
+              <button type="button" id="applyFavoriteBtn" class="favorite-btn">Load</button>
+              <button type="button" id="deleteFavoriteBtn" class="favorite-btn secondary">Delete</button>
+            </div>
+            <div class="favorite-row" style="margin-top: 0.5rem;">
+              <input
+                id="favoriteName"
+                class="favorite-name-input"
+                placeholder="Name this combo (e.g. Global + BBC)"
+              />
+              <button type="button" id="saveFavoriteBtn" class="favorite-btn primary">Save current</button>
+            </div>
+            <p class="helper-text">
+              Favorites are stored only in this browser (localStorage). They include topic, location, and source.
+            </p>
+          </div>
+
+          <div>
+            <label for="address" data-i18n="address-label">Location (City, State/Province, Country)</label>
             <div class="address-input-wrapper">
-              <button
-                type="button"
-                class="location-detect-btn"
-                id="detectLocation"
-                data-i18n="detect-location"
-              >
+              <button type="button" class="location-detect-btn" id="detectLocation" data-i18n="detect-location">
                 📍 Detect My Location
               </button>
               <textarea
@@ -590,619 +527,412 @@
                 required
               ></textarea>
             </div>
-            <p class="helper-text" data-i18n="address-helper">
-              Enter your location or click to detect automatically
-            </p>
-            <p
-              id="regionBadge"
-              style="font-size: .8rem; color: var(--text-muted); margin-top: -0.3rem; display: none;"
-            ></p>
+            <p class="helper-text" data-i18n="address-helper">Enter your location or click to detect automatically</p>
           </div>
-
-          <div>
-            <label for="customUrl" data-i18n="url-label">
-              Custom RSS / News URL (Optional, article URL is also OK)
-            </label>
-            <input
-              id="customUrl"
-              name="customUrl"
-              data-i18n-placeholder="url-placeholder"
-              placeholder="e.g., https://example.com/rss or https://news-site/article"
-            />
-          </div>
-
-          <button type="submit" data-i18n="submit-btn">
-            Generate Daily Digest
-          </button>
+          
+          <button type="submit" data-i18n="submit-btn">Generate Daily Digest</button>
         </form>
-
-        <p
-          class="status"
-          id="helper"
-          data-i18n="helper-text"
-        >
-          Fetching latest news from the past 24 hours...
-        </p>
+        <p class="status" id="helper" data-i18n="helper-text">Fetching latest news from the past 24 hours...</p>
       </section>
 
-      <!-- AI unavailable notice -->
-      <div
-        id="aiDisabledNotice"
-        class="ai-disabled"
-        style="display: none"
-        data-i18n="ai-disabled"
-      >
-        AI summarization is currently unavailable. News articles are displayed
-        without AI-generated summaries.
+      <div id="aiDisabledNotice" class="ai-disabled" style="display: none;" data-i18n="ai-disabled">
+        AI summarization is currently unavailable. News articles are displayed without AI-generated summaries.
       </div>
 
-      <!-- Takeaway section -->
-      <section
-        id="takeawaySection"
-        class="card takeaway-section"
-        style="display: none"
-      >
+      <section id="takeawaySection" class="card takeaway-section" style="display: none;">
         <h2 data-i18n="takeaway-title">Today's Highlights</h2>
         <div class="things-to-watch" id="thingsToWatch"></div>
         <div class="takeaway-box" id="takeawayBox"></div>
       </section>
 
-      <!-- News list -->
       <section class="card">
-        <div
-          id="status"
-          class="status"
-          data-i18n="status-default"
-        >
-          Please submit the form to get your daily digest.
-        </div>
+        <div id="status" class="status" data-i18n="status-default">Please submit the form to get your daily digest.</div>
         <div class="news-list" id="newsList"></div>
-      </section>
-
-      <!-- Simple Analytics -->
-      <section
-        class="card analytics-card"
-        id="analyticsCard"
-        style="display: none"
-      >
-        <h2
-          style="font-size: 1.1rem; margin-bottom: 1rem"
-          data-i18n="analytics-title"
-        >
-          News Analytics
-        </h2>
-        <div id="sourceChart"></div>
       </section>
     </main>
 
     <script>
-      // ------- i18n -------
+      // 多語言支援 - 默認英文優先
       let currentLang = 'en';
-      let detectedRegionCode = null; // ISO-3166 alpha2 (from geolocation)
-      let regionConfigs = []; // from /api/regions
 
       const translations = {
         zh: {
-          title: '📰 每日摘要',
-          subtitle: '幾秒內獲取您的個性化新聞摘要',
-          'topic-label': '您對哪些新聞主題感興趣？（可輸入中文或英文）',
-          'topic-placeholder': '例如：台股、美股、AI、房價、crypto',
-          'address-label': '位置（城市、州/省、國家）',
-          'address-placeholder': '例如：台北，台灣；東京，日本；New York, USA',
-          'address-helper': '請輸入位置或點擊自動偵測（會用來選擇新聞地區）',
-          'detect-location': '📍 偵測我的位置',
-          'detecting-location': '正在偵測位置...',
-          'location-error': '無法偵測位置，請手動輸入。',
-          'location-success': '位置已偵測！',
-          'url-label': '自訂 RSS / 新聞網址（選填，可直接貼新聞頁網址）',
-          'url-placeholder': '例如：https://example.com/rss 或 https://news-site/article',
-          'submit-btn': '生成每日摘要',
-          'helper-text': '正在獲取過去24小時的最新新聞...',
-          'status-default': '請提交表單以獲取您的每日摘要。',
-          'status-loading': '正在獲取最新新聞…',
-          'status-no-news': '目前沒有符合的新聞，換個關鍵字試試？',
-          'status-count': '找到 {count} 則相關新聞',
-          'takeaway-title': '今日重點',
-          'things-to-watch': '今天需要注意的事情',
-          takeaway: 'Take Away',
-          'error-fetch': '無法取得新聞',
-          'ai-disabled':
-            'AI 摘要功能目前不可用。新聞文章將在沒有 AI 生成摘要的情況下顯示。',
-          'analytics-title': '新聞來源分析',
+          title: "📰 每日摘要",
+          subtitle: "幾秒內獲取您的個性化新聞摘要",
+          "topic-label": "您對哪些新聞主題感興趣？",
+          "topic-placeholder": "例如：財經、科技、生活、AI",
+          "address-label": "位置（城市、州/省、國家）",
+          "address-placeholder": "例如：紐約，美國，台灣或倫敦",
+          "address-helper": "請輸入位置或點擊自動偵測",
+          "detect-location": "📍 偵測我的位置",
+          "detecting-location": "正在偵測位置...",
+          "location-error": "無法偵測位置，請手動輸入。",
+          "location-success": "位置已偵測！",
+          "url-label": "自訂 RSS / 新聞網址（選填）",
+          "url-placeholder": "例如：https://example.com/rss",
+          "submit-btn": "生成每日摘要",
+          "helper-text": "正在獲取過去24小時的最新新聞...",
+          "status-default": "請提交表單以獲取您的每日摘要。",
+          "status-loading": "正在獲取最新新聞...",
+          "status-no-news": "目前沒有符合的新聞，換個關鍵字試試？",
+          "status-count": "找到 {count} 則相關新聞",
+          "takeaway-title": "今日重點",
+          "things-to-watch": "今天需要注意的事情",
+          "takeaway": "Take Away",
+          "error-fetch": "無法取得新聞",
+          "ai-disabled": "AI 摘要功能目前不可用。新聞文章將在沒有 AI 生成摘要的情況下顯示。"
         },
         en: {
-          title: '📰 Daily Digest',
-          subtitle: 'Get your personalized news summary in seconds',
-          'topic-label': 'What news topics interest you?',
-          'topic-placeholder': 'e.g., US stocks, AI, housing, crypto',
-          'address-label': 'Location (City, State/Province, Country)',
-          'address-placeholder':
-            'e.g., New York, USA; Taipei, Taiwan; Tokyo, Japan',
-          'address-helper':
-            'Enter your location or click to detect automatically (used for news region)',
-          'detect-location': '📍 Detect My Location',
-          'detecting-location': 'Detecting location...',
-          'location-error':
-            'Unable to detect location. Please enter manually.',
-          'location-success': 'Location detected!',
-          'url-label':
-            'Custom RSS / News URL (optional, article URL is also OK)',
-          'url-placeholder':
-            'e.g., https://example.com/rss or https://news-site/article',
-          'submit-btn': 'Generate Daily Digest',
-          'helper-text':
-            'Fetching latest news from the past 24 hours...',
-          'status-default':
-            'Please submit the form to get your daily digest.',
-          'status-loading': 'Fetching latest news…',
-          'status-no-news':
-            'No matching news found. Try different keywords?',
-          'status-count': 'Found {count} relevant news articles',
-          'takeaway-title': "Today's Highlights",
-          'things-to-watch': 'Things to Watch Today',
-          takeaway: 'Take Away',
-          'error-fetch': 'Failed to fetch news',
-          'ai-disabled':
-            'AI summarization is currently unavailable. News articles are displayed without AI-generated summaries.',
-          'analytics-title': 'News Analytics',
-        },
+          title: "📰 Daily Digest",
+          subtitle: "Get your personalized news summary in seconds",
+          "topic-label": "What news topics interest you?",
+          "topic-placeholder": "e.g., Finance, Tech, Lifestyle, AI",
+          "address-label": "Location (City, State/Province, Country)",
+          "address-placeholder": "e.g., New York, USA, Taiwan, or London",
+          "address-helper": "Enter your location or click to detect automatically",
+          "detect-location": "📍 Detect My Location",
+          "detecting-location": "Detecting location...",
+          "location-error": "Unable to detect location. Please enter manually.",
+          "location-success": "Location detected!",
+          "url-label": "Custom RSS / News URL (Optional)",
+          "url-placeholder": "e.g., https://example.com/rss",
+          "submit-btn": "Generate Daily Digest",
+          "helper-text": "Fetching latest news from the past 24 hours...",
+          "status-default": "Please submit the form to get your daily digest.",
+          "status-loading": "Fetching latest news…",
+          "status-no-news": "No matching news found. Try different keywords?",
+          "status-count": "Found {count} relevant news articles",
+          "takeaway-title": "Today's Highlights",
+          "things-to-watch": "Things to Watch Today",
+          "takeaway": "Take Away",
+          "error-fetch": "Failed to fetch news",
+          "ai-disabled": "AI summarization is currently unavailable. News articles are displayed without AI-generated summaries."
+        }
       };
 
       function updateLanguage(lang) {
         currentLang = lang;
-        document
-          .querySelectorAll('[data-i18n]')
-          .forEach((el) => {
-            const key = el.getAttribute('data-i18n');
-            if (translations[lang][key]) {
-              el.textContent = translations[lang][key];
-            }
-          });
-
-        document
-          .querySelectorAll('[data-i18n-placeholder]')
-          .forEach((el) => {
-            const key = el.getAttribute('data-i18n-placeholder');
-            if (translations[lang][key]) {
-              el.placeholder = translations[lang][key];
-            }
-          });
-
-        document.querySelectorAll('.lang-btn').forEach((btn) => {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+          }
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+          const key = el.getAttribute('data-i18n-placeholder');
+          if (translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+          }
+        });
+        document.querySelectorAll('.lang-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.lang === lang);
         });
       }
 
-      document.querySelectorAll('.lang-btn').forEach((btn) => {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           updateLanguage(btn.dataset.lang);
         });
       });
 
-      // ---- Theme toggle (dark / light) ----
-      const themeToggle = document.getElementById('themeToggle');
-
-      function applyTheme(theme) {
-        document.body.classList.toggle('dark', theme === 'dark');
-        themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-        try {
-          localStorage.setItem('theme', theme);
-        } catch (e) {}
-      }
-
-      const savedTheme = (() => {
-        try {
-          return localStorage.getItem('theme');
-        } catch (e) {
-          return null;
-        }
-      })();
-
-      applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
-
-      themeToggle.addEventListener('click', () => {
-        const next = document.body.classList.contains('dark')
-          ? 'light'
-          : 'dark';
-        applyTheme(next);
-      });
-
-      // initialize language
+      // 初始化：設置默認語言
       updateLanguage('en');
 
-      // sync address textarea height with topic input
+      // 設置地址輸入框高度與topic輸入框一致
       const addressInput = document.getElementById('address');
       const topicInput = document.getElementById('topic');
-
+      
       function syncInputHeight() {
         if (topicInput && addressInput) {
           const topicHeight = topicInput.offsetHeight;
           addressInput.style.height = topicHeight + 'px';
         }
       }
-
+      
+      // 初始化時同步高度
       window.addEventListener('load', syncInputHeight);
       setTimeout(syncInputHeight, 100);
+      
+      // 當窗口大小改變時重新同步
       window.addEventListener('resize', syncInputHeight);
 
-      // load regions from backend
-      async function loadRegions() {
-        try {
-          const resp = await fetch('/api/regions');
-          const data = await resp.json();
-          regionConfigs = data.regions || [];
-        } catch (e) {
-          console.warn('Failed to load regions', e);
+      // 位置偵測功能
+      document.getElementById('detectLocation').addEventListener('click', async () => {
+        const btn = document.getElementById('detectLocation');
+        
+        btn.disabled = true;
+        btn.textContent = translations[currentLang]['detecting-location'];
+        
+        if (!navigator.geolocation) {
+          alert(translations[currentLang]['location-error']);
+          btn.disabled = false;
+          btn.textContent = translations[currentLang]['detect-location'];
+          return;
         }
-      }
-      loadRegions();
-
-      // ---- Location detection ----
-      document
-        .getElementById('detectLocation')
-        .addEventListener('click', async () => {
-          const btn = document.getElementById('detectLocation');
-
-          btn.disabled = true;
-          btn.textContent = translations[currentLang]['detecting-location'];
-
-          if (!navigator.geolocation) {
-            alert(translations[currentLang]['location-error']);
-            btn.disabled = false;
-            btn.textContent =
-              translations[currentLang]['detect-location'];
-            return;
-          }
-
-          try {
-            const position = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(
-                resolve,
-                reject,
-                {
-                  timeout: 10000,
-                  enableHighAccuracy: false,
-                }
-              );
+        
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 10000,
+              enableHighAccuracy: false
             });
-
-            const { latitude, longitude } = position.coords;
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=4&addressdetails=1`
-            );
-            const data = await response.json();
-
-            if (data && data.address) {
-              const address = data.address;
-              let locationText = '';
-
-              if (
-                address.city ||
-                address.town ||
-                address.village
-              ) {
-                locationText =
-                  address.city || address.town || address.village;
-              }
-              if (address.state) {
-                locationText += locationText
-                  ? `, ${address.state}`
-                  : address.state;
-              }
-              if (address.country) {
-                locationText += locationText
-                  ? `, ${address.country}`
-                  : address.country;
-              }
-
-              let cc = (address.country_code || '').toLowerCase();
-              if (cc === 'gb') cc = 'uk';
-              detectedRegionCode = cc || null;
-
-              if (locationText) {
-                addressInput.value = locationText;
-                btn.textContent =
-                  translations[currentLang]['location-success'];
-              } else {
-                throw new Error('No location data');
-              }
+          });
+          
+          // 使用反向地理編碼 API
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3&addressdetails=1`
+          );
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const address = data.address;
+            let locationText = '';
+            
+            // 構建地址字符串
+            if (address.city || address.town || address.village) {
+              locationText = address.city || address.town || address.village;
+            }
+            if (address.state) {
+              locationText += locationText ? `, ${address.state}` : address.state;
+            }
+            if (address.country) {
+              locationText += locationText ? `, ${address.country}` : address.country;
+            }
+            
+            if (locationText) {
+              addressInput.value = locationText;
+              btn.textContent = translations[currentLang]['location-success'];
             } else {
               throw new Error('No location data');
             }
-          } catch (error) {
-            console.error('Location detection error:', error);
-            alert(translations[currentLang]['location-error']);
-            btn.textContent =
-              translations[currentLang]['detect-location'];
-          } finally {
-            btn.disabled = false;
+          } else {
+            throw new Error('No location data');
           }
-        });
-
-      // ---- Region inference ----
-      function inferRegionFromAddress(address) {
-        // 1. geolocation ISO code
-        if (detectedRegionCode) {
-          return detectedRegionCode;
+        } catch (error) {
+          console.error('Location detection error:', error);
+          alert(translations[currentLang]['location-error']);
+          btn.textContent = translations[currentLang]['detect-location'];
+        } finally {
+          btn.disabled = false;
         }
+      });
 
-        if (!address) return 'us';
+      // 表單提交
+      const form = document.getElementById("interestForm");
+      const newsList = document.getElementById("newsList");
+      const statusBox = document.getElementById("status");
+      const takeawaySection = document.getElementById("takeawaySection");
+      const thingsToWatch = document.getElementById("thingsToWatch");
+      const takeawayBox = document.getElementById("takeawayBox");
+      const aiDisabledNotice = document.getElementById("aiDisabledNotice");
 
-        const parts = address
-          .split(',')
-          .map((s) => s.trim().toLowerCase());
-
-        // 1.5 中文/別名映射
-        const zhRegionMap = [
-          { code: 'tw', keywords: ['台灣', '臺灣', '台湾', 'taiwan'] },
-          { code: 'hk', keywords: ['香港', 'hong kong'] },
-          { code: 'jp', keywords: ['日本', 'japan', 'tokyo'] },
-          {
-            code: 'us',
-            keywords: ['美國', '美国', 'usa', 'u.s.', 'united states'],
-          },
-          {
-            code: 'uk',
-            keywords: ['英國', '英国', 'uk', 'united kingdom', 'england'],
-          },
-          { code: 'sg', keywords: ['新加坡', 'singapore'] },
-        ];
-
-        for (const p of parts) {
-          for (const m of zhRegionMap) {
-            if (m.keywords.some((kw) => p.includes(kw))) {
-              return m.code;
-            }
-          }
-        }
-
-        // 2. two-letter region code in address
-        for (const p of parts) {
-          if (p.length === 2) {
-            const hit = regionConfigs.find(
-              (r) => r.code.toLowerCase() === p
-            );
-            if (hit) return hit.code.toLowerCase();
-          }
-        }
-
-        // 3. fuzzy match by english name
-        for (const p of parts) {
-          const hit = regionConfigs.find((r) =>
-            r.name.toLowerCase().includes(p)
-          );
-          if (hit) return hit.code.toLowerCase();
-        }
-
-        return 'us';
-      }
-
-      // ---- Form submit ----
-      const form = document.getElementById('interestForm');
-      const newsList = document.getElementById('newsList');
-      const statusBox = document.getElementById('status');
-      const takeawaySection = document.getElementById(
-        'takeawaySection'
-      );
-      const thingsToWatch = document.getElementById('thingsToWatch');
-      const takeawayBox = document.getElementById('takeawayBox');
-      const aiDisabledNotice =
-        document.getElementById('aiDisabledNotice');
-      const analyticsCard = document.getElementById('analyticsCard');
-      const sourceChart = document.getElementById('sourceChart');
-      const regionBadge = document.getElementById('regionBadge');
-
-      function renderAnalytics(items) {
-        if (!analyticsCard || !sourceChart) return;
-
-        if (!items || !items.length) {
-          analyticsCard.style.display = 'none';
-          return;
-        }
-
-        const counts = {};
-        items.forEach((item) => {
-          try {
-            const url = new URL(item.link);
-            let host = url.hostname
-              .toLowerCase()
-              .replace(/^www\./, '');
-            counts[host] = (counts[host] || 0) + 1;
-          } catch (e) {
-            // ignore
-          }
-        });
-
-        const entries = Object.entries(counts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5);
-
-        if (!entries.length) {
-          analyticsCard.style.display = 'none';
-          return;
-        }
-
-        const max = entries[0][1] || 1;
-
-        sourceChart.innerHTML = entries
-          .map(
-            ([host, count]) => `
-          <div class="chart-row">
-            <span class="chart-label">${host}</span>
-            <div class="chart-bar-wrapper">
-              <div class="chart-bar" style="width:${
-                (count / max) * 100
-              }%"></div>
-            </div>
-            <span class="chart-value">${count}</span>
-          </div>
-        `
-          )
-          .join('');
-
-        analyticsCard.style.display = 'block';
-      }
-
-      form.addEventListener('submit', async (event) => {
+      form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const formData = new FormData(form);
         const params = new URLSearchParams();
-
-        const address = (formData.get('address') || '').trim();
-        const region = inferRegionFromAddress(address);
-        params.append('region', region || 'us');
-
-        params.append(
-          'topic',
-          formData.get('topic') || 'trending'
-        );
-        params.append(
-          'customUrl',
-          formData.get('customUrl') || ''
-        );
+        
+        // 處理地址輸入
+        const address = formData.get('address').trim();
+        if (address) {
+          // 簡單解析地址，提取城市或國家
+          const addressParts = address.split(',').map(s => s.trim());
+          const region = addressParts[addressParts.length - 1] || addressParts[0] || 'us';
+          params.append('region', region);
+        } else {
+          params.append('region', 'us');
+        }
+        
+        
+        // 其他參數
+        params.append('topic', formData.get('topic') || 'trending');
+        const presetSource = formData.get('presetSource') || '';
+        if (presetSource) {
+          params.append('presetId', presetSource);
+        }
         params.append('lang', currentLang);
 
-        // 顯示 region badge
-        if (regionBadge) {
-          const cfg = regionConfigs.find(
-            (r) => r.code.toLowerCase() === (region || 'us')
-          );
-          if (cfg) {
-            regionBadge.textContent = `Region: ${cfg.name} (${cfg.code.toUpperCase()})`;
-            regionBadge.style.display = 'block';
-          } else {
-            regionBadge.textContent = `Region: ${region.toUpperCase()}`;
-            regionBadge.style.display = 'block';
-          }
-        }
 
-        // status & skeleton
-        statusBox.textContent =
-          translations[currentLang]['status-loading'];
-        statusBox.className = 'status loading';
-
-        newsList.innerHTML = `
-          <div class="news-skeleton">
-            ${[1, 2, 3]
-              .map(
-                () => `
-              <div class="skeleton-item">
-                <div class="skeleton-line"></div>
-                <div class="skeleton-line short"></div>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        `;
-
-        takeawaySection.style.display = 'none';
-        aiDisabledNotice.style.display = 'none';
-        analyticsCard.style.display = 'none';
-        sourceChart.innerHTML = '';
+        statusBox.textContent = translations[currentLang]["status-loading"];
+        statusBox.className = "status loading";
+        newsList.innerHTML = "";
+        takeawaySection.style.display = "none";
+        aiDisabledNotice.style.display = "none";
 
         try {
-          const response = await fetch(
-            `/api/news?${params.toString()}`
-          );
+          const response = await fetch(`/api/news?${params.toString()}`);
           const payload = await response.json();
 
           if (!response.ok) {
-            throw new Error(
-              payload.error ||
-                translations[currentLang]['error-fetch']
-            );
+            throw new Error(payload.error || translations[currentLang]["error-fetch"]);
           }
 
-          const { items, takeaway, ai_error } = payload;
+          const { items, takeaway } = payload;
 
-          if (!items || !items.length) {
-            newsList.innerHTML = '';
-            statusBox.textContent =
-              translations[currentLang]['status-no-news'];
-            statusBox.className = 'status';
+          if (!items.length) {
+            statusBox.textContent = translations[currentLang]["status-no-news"];
+            statusBox.className = "status";
             return;
           }
 
-          statusBox.textContent =
-            translations[currentLang]['status-count'].replace(
-              '{count}',
-              items.length
-            );
-          statusBox.className = 'status';
+          statusBox.textContent = translations[currentLang]["status-count"].replace("{count}", items.length);
+          statusBox.className = "status";
 
-          // AI summary (bilingual)
-          if (ai_error) {
-            aiDisabledNotice.textContent = ai_error;
-            aiDisabledNotice.style.display = 'block';
-            takeawaySection.style.display = 'none';
-          } else if (
-            takeaway &&
-            takeaway[currentLang]
-          ) {
-            const localeTakeaway = takeaway[currentLang];
-
-            if (localeTakeaway.things_to_watch) {
-              const thingsList = localeTakeaway.things_to_watch
-                .split('\n')
-                .filter((line) => line.trim())
-                .map((line) =>
-                  line.replace(/^\d+\.\s*/, '').trim()
-                );
-
+          // 處理 AI 總結
+          if (takeaway && takeaway.things_to_watch && takeaway.takeaway) {
+            // AI 功能可用，顯示總結
+            if (takeaway.things_to_watch) {
+              const thingsList = takeaway.things_to_watch.split('\n').filter(line => line.trim());
               thingsToWatch.innerHTML = `
-                <h3>${translations[currentLang]['things-to-watch']}</h3>
+                <h3>${translations[currentLang]["things-to-watch"]}</h3>
                 <ul>
-                  ${thingsList
-                    .map((item) => `<li>${item}</li>`)
-                    .join('')}
+                  ${thingsList.map(item => `<li>${item.replace(/^\d+\.\s*/, '').trim()}</li>`).join('')}
                 </ul>
               `;
-            } else {
-              thingsToWatch.innerHTML = '';
             }
-
-            if (localeTakeaway.takeaway) {
+            if (takeaway.takeaway) {
               takeawayBox.innerHTML = `
-                <h3>${translations[currentLang]['takeaway']}</h3>
-                <p>${localeTakeaway.takeaway}</p>
+                <h3>${translations[currentLang]["takeaway"]}</h3>
+                <p>${takeaway.takeaway}</p>
               `;
-            } else {
-              takeawayBox.innerHTML = '';
             }
-
-            takeawaySection.style.display = 'block';
-            aiDisabledNotice.style.display = 'none';
+            takeawaySection.style.display = "block";
+            aiDisabledNotice.style.display = "none";
           } else {
-            aiDisabledNotice.style.display = 'block';
-            takeawaySection.style.display = 'none';
+            // AI 功能不可用，顯示提示
+            aiDisabledNotice.style.display = "block";
+            takeawaySection.style.display = "none";
           }
 
-          // news list
+          // 顯示新聞列表（只顯示標題和連結，字體較小）
           newsList.innerHTML = items
             .map(
               (item) => `
-              <article class="news-item">
-                <h3>
-                  <a href="${item.link}" target="_blank" rel="noopener">
-                    ${item.title}
-                  </a>
-                </h3>
-                <span class="link-icon">→</span>
-              </article>
-            `
+                <article class="news-item">
+                  <h3><a href="${item.link}" target="_blank" rel="noopener">${item.title}</a></h3>
+                  <span class="link-icon">→</span>
+                </article>
+              `
             )
-            .join('');
-
-          // analytics
-          renderAnalytics(items);
+            .join("");
         } catch (error) {
           console.error(error);
-          newsList.innerHTML = '';
           statusBox.textContent = error.message;
-          statusBox.className = 'error';
+          statusBox.className = "error";
         }
       });
-    </script>
+    
+    // ----- Favorites (stored in localStorage) -----
+    const FAVORITES_STORAGE_KEY = 'dailyDigestFavorites';
+    function loadFavorites() {
+      try {
+        const raw = window.localStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.error('Failed to load favorites', e);
+        return [];
+      }
+    }
+
+    function saveFavorites(list) {
+      try {
+        window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.error('Failed to save favorites', e);
+      }
+    }
+
+    function renderFavorites() {
+      const select = document.getElementById('favoriteSelect');
+      if (!select) return;
+      const list = loadFavorites();
+      // reset
+      select.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '-- None --';
+      select.appendChild(placeholder);
+      for (const fav of list) {
+        const opt = document.createElement('option');
+        opt.value = fav.id;
+        opt.textContent = fav.name;
+        select.appendChild(opt);
+      }
+    }
+
+    function initFavoritesUI() {
+      const saveBtn = document.getElementById('saveFavoriteBtn');
+      const applyBtn = document.getElementById('applyFavoriteBtn');
+      const deleteBtn = document.getElementById('deleteFavoriteBtn');
+      const nameInput = document.getElementById('favoriteName');
+      const select = document.getElementById('favoriteSelect');
+      const topicInput = document.getElementById('topic');
+      const locationInput = document.getElementById('location');
+      const presetSelect = document.getElementById('presetSource');
+
+      if (!saveBtn || !applyBtn || !deleteBtn || !nameInput || !select || !topicInput || !locationInput || !presetSelect) {
+        return;
+      }
+
+      renderFavorites();
+
+      saveBtn.addEventListener('click', () => {
+        const name = (nameInput.value || '').trim();
+        if (!name) {
+          alert('Please enter a name for this favorite.');
+          return;
+        }
+        const topic = topicInput.value || '';
+        const location = locationInput.value || '';
+        const preset = presetSelect.value || '';
+
+        const list = loadFavorites();
+        const id = Date.now().toString();
+        list.push({
+          id,
+          name,
+          topic,
+          location,
+          preset
+        });
+        saveFavorites(list);
+        renderFavorites();
+        nameInput.value = '';
+      });
+
+      applyBtn.addEventListener('click', () => {
+        const list = loadFavorites();
+        const id = select.value;
+        if (!id) return;
+        const fav = list.find(x => x.id === id);
+        if (!fav) return;
+        topicInput.value = fav.topic || '';
+        locationInput.value = fav.location || '';
+        presetSelect.value = fav.preset || '';
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        const id = select.value;
+        if (!id) return;
+        let list = loadFavorites();
+        const idx = list.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        list.splice(idx, 1);
+        saveFavorites(list);
+        renderFavorites();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initFavoritesUI();
+      } catch (e) {
+        console.error('initFavoritesUI error', e);
+      }
+    });
+</script>
   </body>
 </html>
