@@ -47,6 +47,7 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
 # - Otherwise fall back to OpenAI (if OPENAI_API_KEY available).
 # - You may force provider via ENV: AI_PROVIDER=ollama|openai|auto
 AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 
 def is_ollama_available(timeout: float = 1.0) -> bool:
