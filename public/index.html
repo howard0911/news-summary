@@ -815,8 +815,32 @@
           }
         } catch (error) {
           console.error('Location detection error:', error);
-          alert(translations[currentLang]['location-error']);
-          btn.textContent = translations[currentLang]['detect-location'];
+          // Fallback: IP-based geolocation
+          try {
+            const ipRes = await fetch("https://ipapi.co/json/");
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              const parts = [];
+              if (ipData.city) parts.push(ipData.city);
+              if (ipData.region) parts.push(ipData.region);
+              if (ipData.country_name) parts.push(ipData.country_name);
+              const ipLocation = parts.join(", ");
+              if (ipLocation) {
+                addressInput.value = ipLocation;
+                btn.textContent = translations[currentLang]['location-success'];
+              } else {
+                alert(translations[currentLang]['location-error']);
+                btn.textContent = translations[currentLang]['detect-location'];
+              }
+            } else {
+              alert(translations[currentLang]['location-error']);
+              btn.textContent = translations[currentLang]['detect-location'];
+            }
+          } catch (ipError) {
+            console.error('IP-based location error:', ipError);
+            alert(translations[currentLang]['location-error']);
+            btn.textContent = translations[currentLang]['detect-location'];
+          }
         } finally {
           btn.disabled = false;
         }
