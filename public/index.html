@@ -24,6 +24,130 @@
         --error: #ef4444;
       }
 
+      body.dark {
+        --bg: #020617;
+        --bg-secondary: #020617;
+        --text: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --border: #1f2937;
+        --border-light: #111827;
+        --primary: #f9fafb;
+        --accent: #6366f1;
+        --accent-light: rgba(129, 140, 248, 0.18);
+        --success: #22c55e;
+        --warning: #facc15;
+        --danger: #f97373;
+        --card-shadow: 0 22px 60px rgba(15, 23, 42, 0.95);
+      }
+
+      body.dark .lang-toggle {
+        background: #020617;
+        border-color: #1f2937;
+        box-shadow: 0 10px 35px rgba(15, 23, 42, 0.9);
+      }
+
+      body.dark .lang-btn {
+        color: #9ca3af;
+      }
+
+      .theme-btn {
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s ease;
+      }
+
+      .theme-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      }
+
+
+      body.dark .lang-btn.active {
+        color: #f9fafb;
+      }
+
+      body.dark .app-container {
+        background:
+          radial-gradient(circle at top, rgba(129, 140, 248, 0.18), transparent 55%),
+          radial-gradient(circle at bottom, rgba(56, 189, 248, 0.12), transparent 55%),
+          #020617;
+      }
+
+      body.dark .card {
+        background: #020617;
+        border-color: #1f2937;
+      }
+
+      body.dark .card-header h2,
+      body.dark .card-header p {
+        color: #e5e7eb;
+      }
+
+      body.dark .input {
+        background: #020617;
+        border-color: #1f2937;
+        color: #e5e7eb;
+      }
+
+      body.dark .input::placeholder {
+        color: #6b7280;
+      }
+
+      body.dark .btn-primary {
+        background: #6366f1;
+        color: #f9fafb;
+      }
+
+      body.dark .btn-primary:hover {
+        background: #4f46e5;
+      }
+
+      body.dark .btn-outline {
+        border-color: #374151;
+        color: #e5e7eb;
+      }
+
+      body.dark .btn-outline:hover {
+        background: #111827;
+      }
+
+      body.dark .badge-keyword {
+        background: rgba(55, 65, 81, 0.7);
+        color: #e5e7eb;
+      }
+
+      body.dark .news-list li {
+        border-color: #111827;
+      }
+
+      body.dark .news-link {
+        color: #e5e7eb;
+      }
+
+      body.dark .news-link:hover {
+        color: #a5b4fc;
+      }
+
+      body.dark .metric-label {
+        color: #9ca3af;
+      }
+
+      body.dark .tooltip-badge {
+        background: rgba(31, 41, 55, 0.95);
+        color: #e5e7eb;
+        border-color: #374151;
+      }
+
+
       * {
         margin: 0;
         padding: 0;
@@ -440,6 +564,7 @@
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="en">English</button>
       <button class="lang-btn" data-lang="zh">中文</button>
+          <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
     </div>
 
     <header>
@@ -488,27 +613,6 @@
             </select>
             <p class="helper-text">
               Leave as default to use Google News by topic &amp; region, or choose a specific news site.
-            </p>
-          </div>
-          <div class="favorites-block">
-            <label for="favoriteSelect">My favorite combos</label>
-            <div class="favorite-row">
-              <select id="favoriteSelect" class="favorite-select">
-                <option value="">-- None --</option>
-              </select>
-              <button type="button" id="applyFavoriteBtn" class="favorite-btn">Load</button>
-              <button type="button" id="deleteFavoriteBtn" class="favorite-btn secondary">Delete</button>
-            </div>
-            <div class="favorite-row" style="margin-top: 0.5rem;">
-              <input
-                id="favoriteName"
-                class="favorite-name-input"
-                placeholder="Name this combo (e.g. Global + BBC)"
-              />
-              <button type="button" id="saveFavoriteBtn" class="favorite-btn primary">Save current</button>
-            </div>
-            <p class="helper-text">
-              Favorites are stored only in this browser (localStorage). They include topic, location, and source.
             </p>
           </div>
 
@@ -821,116 +925,56 @@
           statusBox.className = "error";
         }
       });
-    
-    // ----- Favorites (stored in localStorage) -----
-    const FAVORITES_STORAGE_KEY = 'dailyDigestFavorites';
-    function loadFavorites() {
+// ----- Dark mode toggle -----
+    const THEME_KEY = 'dailyDigestTheme';
+    function applyTheme(theme) {
+      const body = document.body;
+      if (theme === 'dark') {
+        body.classList.add('dark');
+      } else {
+        body.classList.remove('dark');
+      }
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) {
+        toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+    }
+
+    function initTheme() {
+      let theme = 'light';
       try {
-        const raw = window.localStorage.getItem(FAVORITES_STORAGE_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed;
-      } catch (e) {
-        console.error('Failed to load favorites', e);
-        return [];
-      }
-    }
-
-    function saveFavorites(list) {
-      try {
-        window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
-      } catch (e) {
-        console.error('Failed to save favorites', e);
-      }
-    }
-
-    function renderFavorites() {
-      const select = document.getElementById('favoriteSelect');
-      if (!select) return;
-      const list = loadFavorites();
-      // reset
-      select.innerHTML = '';
-      const placeholder = document.createElement('option');
-      placeholder.value = '';
-      placeholder.textContent = '-- None --';
-      select.appendChild(placeholder);
-      for (const fav of list) {
-        const opt = document.createElement('option');
-        opt.value = fav.id;
-        opt.textContent = fav.name;
-        select.appendChild(opt);
-      }
-    }
-
-    function initFavoritesUI() {
-      const saveBtn = document.getElementById('saveFavoriteBtn');
-      const applyBtn = document.getElementById('applyFavoriteBtn');
-      const deleteBtn = document.getElementById('deleteFavoriteBtn');
-      const nameInput = document.getElementById('favoriteName');
-      const select = document.getElementById('favoriteSelect');
-      const topicInput = document.getElementById('topic');
-      const locationInput = document.getElementById('location');
-      const presetSelect = document.getElementById('presetSource');
-
-      if (!saveBtn || !applyBtn || !deleteBtn || !nameInput || !select || !topicInput || !locationInput || !presetSelect) {
-        return;
-      }
-
-      renderFavorites();
-
-      saveBtn.addEventListener('click', () => {
-        const name = (nameInput.value || '').trim();
-        if (!name) {
-          alert('Please enter a name for this favorite.');
-          return;
+        const stored = window.localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        } else {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
         }
-        const topic = topicInput.value || '';
-        const location = locationInput.value || '';
-        const preset = presetSelect.value || '';
-
-        const list = loadFavorites();
-        const id = Date.now().toString();
-        list.push({
-          id,
-          name,
-          topic,
-          location,
-          preset
+      } catch (e) {
+        console.error('theme read error', e);
+      }
+      applyTheme(theme);
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+          const next = current === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          try {
+            window.localStorage.setItem(THEME_KEY, next);
+          } catch (e) {
+            console.error('theme save error', e);
+          }
         });
-        saveFavorites(list);
-        renderFavorites();
-        nameInput.value = '';
-      });
-
-      applyBtn.addEventListener('click', () => {
-        const list = loadFavorites();
-        const id = select.value;
-        if (!id) return;
-        const fav = list.find(x => x.id === id);
-        if (!fav) return;
-        topicInput.value = fav.topic || '';
-        locationInput.value = fav.location || '';
-        presetSelect.value = fav.preset || '';
-      });
-
-      deleteBtn.addEventListener('click', () => {
-        const id = select.value;
-        if (!id) return;
-        let list = loadFavorites();
-        const idx = list.findIndex(x => x.id === id);
-        if (idx === -1) return;
-        list.splice(idx, 1);
-        saveFavorites(list);
-        renderFavorites();
-      });
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       try {
-        initFavoritesUI();
+        initTheme();
       } catch (e) {
-        console.error('initFavoritesUI error', e);
+        console.error('initTheme error', e);
       }
     });
 </script>
