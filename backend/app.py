@@ -41,8 +41,14 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 # OpenAI config (optional, used if Ollama not available)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+# Groq config (OpenAI-compatible API, recommended free tier)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+
+# Native OpenAI model name (if you decide to use real OpenAI)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # Behavior:
 # - If local Ollama responds, use it.
@@ -54,11 +60,9 @@ AI_PROVIDER = os.getenv("AI_PROVIDER", "auto").lower()
 def is_ollama_available(timeout: float = 1.0) -> bool:
     """Check whether Ollama local server appears to be running."""
     try:
-        # Query models endpoint (works for many Ollama setups)
         resp = requests.get(f"{OLLAMA_URL}/models", timeout=timeout)
         if resp.status_code == 200:
             return True
-        # Some Ollama setups expose /v1 or root; try root quickly
         resp2 = requests.get(OLLAMA_URL, timeout=timeout)
         return resp2.status_code == 200
     except Exception:
@@ -66,15 +70,26 @@ def is_ollama_available(timeout: float = 1.0) -> bool:
 
 
 def get_openai_client():
-    """Lazy-create an OpenAI client if API key present."""
+    """Create a native OpenAI client if OPENAI_API_KEY is set."""
     if not OPENAI_API_KEY:
         return None
     try:
-        # Initialize OpenAI client with optional base_url
-        client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
-        return client
+        if OPENAI_BASE_URL:
+            return OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+        return OpenAI(api_key=OPENAI_API_KEY)
     except Exception as e:
         print("Error initializing OpenAI client:", e)
+        return None
+
+
+def get_groq_client():
+    """Create a Groq client using OpenAI-compatible API."""
+    if not GROQ_API_KEY:
+        return None
+    try:
+        return OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
+    except Exception as e:
+        print("Error initializing Groq client:", e)
         return None
 
 
@@ -82,31 +97,42 @@ def get_llm_provider() -> Dict:
     """
     Decide which provider to use and return a descriptor dict:
     {
-        'provider': 'ollama'|'openai'|'none',
-        ...provider-specific fields...
+        "provider": "ollama" | "groq" | "openai" | "none",
+        ...
     }
     """
-    # If forced by env
+    # 1) Explicit selection via env
     if AI_PROVIDER == "ollama":
         if is_ollama_available():
-            return {"provider": "ollama", "base_url": OLLAMA_URL, "model": OLLAMA_MODEL}
-        else:
-            return {"provider": "none", "reason": "OLLAMA_FORCED_but_unavailable"}
+            return {"provider": "ollama", "model": OLLAMA_MODEL}
+        return {"provider": "none", "reason": "OLLAMA_FORCED_but_unavailable"}
+
+    if AI_PROVIDER == "groq":
+        client = get_groq_client()
+        if client:
+            return {"provider": "groq", "client": client, "model": GROQ_MODEL}
+        return {"provider": "none", "reason": "GROQ_FORCED_but_no_api_key"}
 
     if AI_PROVIDER == "openai":
         client = get_openai_client()
         if client:
             return {"provider": "openai", "client": client, "model": OPENAI_MODEL}
-        else:
-            return {"provider": "none", "reason": "OPENAI_FORCED_but_no_api_key"}
+        return {"provider": "none", "reason": "OPENAI_FORCED_but_no_api_key"}
 
-    # Auto mode: prefer Ollama if available, else OpenAI if key present
+    # 2) Auto mode: prefer Ollama (local) → Groq (free cloud) → OpenAI (paid)
     if is_ollama_available():
-        return {"provider": "ollama", "base_url": OLLAMA_URL, "model": OLLAMA_MODEL}
-    client = get_openai_client()
-    if client:
-        return {"provider": "openai", "client": client, "model": OPENAI_MODEL}
+        return {"provider": "ollama", "model": OLLAMA_MODEL}
+
+    groq_client = get_groq_client()
+    if groq_client:
+        return {"provider": "groq", "client": groq_client, "model": GROQ_MODEL}
+
+    openai_client = get_openai_client()
+    if openai_client:
+        return {"provider": "openai", "client": openai_client, "model": OPENAI_MODEL}
+
     return {"provider": "none", "reason": "no_provider_available"}
+
 
 
 # ------------------------------
@@ -161,17 +187,29 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
             "max_tokens": max_tokens,
         }
         try:
-            r = requests.post(f"{provider['base_url']}/chat/completions", json=payload, timeout=timeout)
+            r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
             r.raise_for_status()
             resp_json = r.json()
             return _parse_ollama_response(resp_json)
         except Exception as e:
-            # If Ollama fails, attempt fallback to OpenAI (if available)
+            # If Ollama fails, try Groq first, then OpenAI
             print("Ollama request failed:", e)
-            client = get_openai_client()
-            if client:
+            groq_client = get_groq_client()
+            if groq_client:
                 try:
-                    resp = client.chat.completions.create(
+                    resp = groq_client.chat.completions.create(
+                        model=GROQ_MODEL,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                    return resp.choices[0].message.content
+                except Exception as ge:
+                    return f"[Groq Fallback Error] {e} | {ge}"
+            openai_client = get_openai_client()
+            if openai_client:
+                try:
+                    resp = openai_client.chat.completions.create(
                         model=OPENAI_MODEL,
                         messages=messages,
                         max_tokens=max_tokens,
@@ -179,39 +217,27 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
                     )
                     return resp.choices[0].message.content
                 except Exception as oe:
-                    return f"[OpenAI Fallback Error] {oe}"
-            return f"[Ollama Error] {e}"
+                    return f"[OpenAI Fallback Error] {e} | {oe}"
+            return f"[Error] Ollama failed and no Groq/OpenAI fallback available: {e}"
 
-    # ---------- OpenAI ----------
-    if provider["provider"] == "openai":
-        client: OpenAI = provider["client"]
+    # ---------- Groq / OpenAI (OpenAI-compatible clients) ----------
+    if provider["provider"] in ("groq", "openai"):
+        client = provider["client"]
+        model = provider["model"]
         try:
             resp = client.chat.completions.create(
-                model=OPENAI_MODEL,
+                model=model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
             return resp.choices[0].message.content
         except Exception as e:
-            print("OpenAI request failed:", e)
-            # Try Ollama as fallback if available
-            if is_ollama_available():
-                try:
-                    payload = {
-                        "model": OLLAMA_MODEL,
-                        "messages": messages,
-                        "temperature": temperature,
-                        "max_tokens": max_tokens,
-                    }
-                    r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
-                    r.raise_for_status()
-                    return _parse_ollama_response(r.json())
-                except Exception as oe:
-                    return f"[OpenAI Error] {e} | [Ollama Fallback Error] {oe}"
-            return f"[OpenAI Error] {e}"
+            prefix = "[Groq Error]" if provider["provider"] == "groq" else "[OpenAI Error]"
+            return f"{prefix} {e}"
 
     return "[Error] Unknown provider flow"
+
 
 
 # ------------------------------
@@ -391,7 +417,7 @@ Please respond in English in the following format:
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
     out = ask_llm(messages, max_tokens=500, temperature=0.7)
-    if out and not out.startswith("[Error]") and not out.startswith("[Ollama Error]") and not out.startswith("[OpenAI Error]"):
+    if out and not out.startswith("[Error]") and not out.startswith("[Ollama Error]") and not out.startswith("[OpenAI Error]") and not out.startswith("[Groq Error]") and not out.startswith("[Groq Fallback Error]"):
         # Try to parse sections
         if lang.startswith("zh"):
             things_to_watch = extract_section(out, "今天需要注意的事情")

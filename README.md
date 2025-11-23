@@ -2,64 +2,80 @@
 
 English | 中文
 
-## 🌟 Overview 概述
+## 🌟 Overview｜概述
 Daily Digest is a lightweight AI-powered news dashboard.
-You can follow global headlines using Google News (default) or choose specific RSS sources such as BBC, CNN, NYTimes, Guardian, and more.
+Now powered by **Groq open-source LLMs**, providing **fast & free** news summarization.
 
-Daily Digest 是一款輕量級的 AI 新聞摘要工具。  
-你可以使用 Google News（預設）或選擇特定 RSS 來源（如 BBC、CNN、NYTimes）。
+Daily Digest 是一款輕量 AI 新聞摘要工具，
+現在支援 **Groq 開源模型（免費又高速）**，可自動生成新聞重點整理與雙語摘要。
 
-AI automatically produces bilingual summaries (English + Chinese).  
-AI 會自動產生雙語摘要（英文 + 中文）。
+支援：
+- **Google News**（主題 + 城市/地區）
+- **RSS 新聞來源選單**（BBC / CNN / NYT / Guardian 等）
+- **AI 雙語摘要**（英文 ➜ 中文）
 
-## ✨ Features 功能特點
-### 🔹 Multiple News Sources 多新聞來源
-- Default: Google News by topic & region  
-- Or pick an RSS source: BBC / CNN / NYT / Guardian / WSJ / Yahoo…
+## ✨ Features｜功能特色
+### 🔹 Multiple News Sources 多來源
+- 預設使用 Google News 搜尋
+- 可選擇特定 RSS（BBC、CNN、NYT、Guardian…）
 
-預設依主題＋地區抓取 Google News  
-或直接選擇 RSS 來源（如 BBC、CNN、NYT…）
-
-### 🔹 AI Summaries (English + Chinese)
-AI produces:
-- Today’s Key Points  
-- Takeaways (English → 中文翻譯)
-
-AI 會產生：
-- 今日重點  
-- 中英文摘要（自動翻譯）
-
-### 🔹 Favorites 收藏組合
-Store your frequently used combinations (Topic + Location + Source).  
-Favorites are stored in your browser only.
-
-可收藏常用組合（主題＋地區＋來源），存於瀏覽器。
+### 🔹 AI Summaries with Groq（English + Chinese）
+AI 會輸出：
+- "Today’s Key Points"（英文）
+- 中文要點摘要（自動翻譯）
 
 ### 🔹 Modern UI 現代化介面
-- Dark Mode  
-- Loading Skeleton  
-- Simple Analytics
+- Dark Mode（深色模式）
+- Loading Skeleton（載入骨架）
+- 地理位置自動偵測，可細到「城市」層級（例如 Chicago, United States）
 
-## 🚀 Quick Start 快速開始
+## 🚀 Quick Start｜快速開始
+### Install & Run
 ```bash
 pip install -r requirements.txt
 python backend/app.py
 ```
 
-Visit:  
+Visit in browser:
+```
 http://localhost:5000
+```
 
-## ⚙️ Environment Variables 環境變數
-AI_PROVIDER=openai  
-OPENAI_API_KEY=your-key  
-OPENAI_MODEL=gpt-4o-mini  
+## ⚙️ Environment Variables｜環境變數（Groq 推薦設定）
+本專案支援 **Groq / OpenAI / Ollama**，
+但最推薦 & 完全免費的方案是 **Groq**。
 
-## 📁 Project Structure 專案結構
-backend/app.py  
-public/index.html  
-requirements.txt  
-Dockerfile  
+### ▶ 使用 Groq（免費高速）
+在 `.env` 或 Railway / Render 設：
+```
+AI_PROVIDER=groq
+GROQ_API_KEY=你的_groq_key
+GROQ_MODEL=llama-3.1-8b-instant
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+```
 
-## 📜 License 授權
-Free to use & modify for personal projects.  
-個人可自由使用、修改。
+### ▶ 如果你想切回 OpenAI
+```
+AI_PROVIDER=openai
+OPENAI_API_KEY=你的key
+OPENAI_MODEL=gpt-4o-mini
+```
+
+### ▶ 如果你在本機想用 Ollama
+```
+AI_PROVIDER=ollama
+OLLAMA_URL=http://localhost:11434/v1
+OLLAMA_MODEL=llama3.2:3b
+```
+
+## 📁 Project Structure｜專案結構
+```
+backend/app.py        # Groq / OpenAI / Ollama 自動切換
+public/index.html     # RSS 選單 + 城市級地點偵測 + Dark Mode
+requirements.txt
+Dockerfile
+```
+
+## 📜 License｜授權
+Free for personal and non-commercial use.
+可自由使用與修改（個人與非商業用途）。
