@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Daily Digest</title>
+    <title>DAILY DIGEST</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>" />
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -51,18 +51,25 @@
         color: #9ca3af;
       }
 
+      body.dark .account-btn {
+        background: #020617;
+        border-color: #1f2937;
+        color: #e5e7eb;
+      }
+
       .theme-btn {
-        padding: 0.35rem 0.65rem;
+        padding: 0.25rem 0.5rem;
         border-radius: 999px;
         border: none;
         cursor: pointer;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         background: var(--bg-secondary);
         color: var(--text-secondary);
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.18s ease;
+        width: auto;
       }
 
       .theme-btn:hover {
@@ -72,7 +79,8 @@
 
 
       body.dark .lang-btn.active {
-        color: #f9fafb;
+        background: #111827;
+        color: #e5e7eb;
       }
 
       body.dark .app-container {
@@ -109,6 +117,16 @@
 
       body.dark .btn-primary:hover {
         background: #4f46e5;
+      }
+
+      body.dark button[type="submit"] {
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid #1f2937;
+      }
+
+      body.dark button[type="submit"]:hover {
+        background: #1f2937;
       }
 
       body.dark .btn-outline {
@@ -164,30 +182,195 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      .lang-toggle {
+      .top-actions {
         position: fixed;
         top: 1.5rem;
         right: 1.5rem;
         z-index: 100;
         display: flex;
-        gap: 0.5rem;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .lang-toggle {
+        display: flex;
+        gap: 0.35rem;
         background: white;
-        padding: 0.5rem;
+        padding: 0.3rem;
         border-radius: 12px;
         border: 1px solid var(--border);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
 
+      .account-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: white;
+        font-weight: 600;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        width: auto;
+      }
+
+      .account-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+      }
+
+      .account-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .account-menu-wrapper {
+        position: relative;
+      }
+
+      .account-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.6rem);
+        min-width: 260px;
+        padding: 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+        color: #0f172a;
+        z-index: 200;
+      }
+
+      body.dark .account-menu {
+        background: #0b0f19;
+        border-color: #1f2937;
+        color: #f9fafb;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.6);
+      }
+
+      .account-menu-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        margin-bottom: 0.75rem;
+      }
+
+      .account-menu-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .account-menu-email {
+        color: rgba(15, 23, 42, 0.6);
+        font-size: 0.85rem;
+        word-break: break-all;
+      }
+
+      body.dark .account-menu-email {
+        color: rgba(226, 232, 240, 0.8);
+      }
+
+      .account-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(99, 102, 241, 0.25);
+        color: #c7d2fe;
+        font-size: 0.75rem;
+        font-weight: 600;
+        width: fit-content;
+      }
+
+      .account-menu-item {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: #0f172a;
+        text-align: left;
+        padding: 0.55rem 0.4rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .account-menu-item:hover {
+        background: rgba(15, 23, 42, 0.06);
+      }
+
+      body.dark .account-menu-item {
+        color: #e5e7eb;
+      }
+
+      body.dark .account-menu-item:hover {
+        background: rgba(148, 163, 184, 0.15);
+      }
+
+      .account-menu-footer {
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+      }
+
+      .account-menu-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .account-menu .lang-toggle {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: none;
+      }
+
+      .account-menu .lang-btn.active {
+        background: #0f172a;
+        color: #ffffff;
+      }
+
+      body.dark .account-menu .lang-toggle {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(148, 163, 184, 0.2);
+      }
+
+      body.dark .account-menu .lang-btn.active {
+        background: #f9fafb;
+        color: #0b0f19;
+      }
+
       .lang-btn {
-        padding: 0.5rem 1rem;
+        padding: 0.35rem 0.75rem;
         background: transparent;
         border: none;
         color: var(--text-secondary);
         cursor: pointer;
         border-radius: 8px;
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         transition: all 0.2s;
+        width: auto;
       }
 
       .lang-btn.active {
@@ -242,7 +425,7 @@
         font-weight: 500;
         margin-bottom: 0.75rem;
         color: var(--text);
-        font-size: 0.95rem;
+        font-size: 0.85rem;
       }
 
       input, select, textarea {
@@ -320,6 +503,94 @@
         transform: translateY(0);
       }
 
+      .btn-outline {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-outline:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text);
+      }
+
+      .auth-card .card-header {
+        margin-bottom: 1rem;
+      }
+
+      .auth-status {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .auth-actions,
+      .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .auth-actions button,
+      .form-actions button {
+        width: auto;
+        padding: 0.65rem 1.2rem;
+        font-size: 0.85rem;
+      }
+
+      .pref-status {
+        margin-top: 0.75rem;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+      }
+
+      .auth-page {
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(circle at top, rgba(99, 102, 241, 0.12), transparent 55%),
+          radial-gradient(circle at bottom, rgba(14, 165, 233, 0.1), transparent 55%),
+          #0b1120;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem;
+        z-index: 300;
+      }
+
+      .auth-page-card {
+        width: min(620px, 100%);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+      }
+
+      .auth-page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .auth-page-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.25rem;
+      }
+
+      .auth-close {
+        padding: 0.2rem 0.15rem;
+        font-size: 0.85rem;
+      }
+
+      .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
       .takeaway-section {
         background: var(--bg-secondary);
         padding: 2rem;
@@ -357,7 +628,7 @@
         background: white;
         border-radius: 10px;
         border-left: 3px solid var(--accent);
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         line-height: 1.6;
       }
 
@@ -389,7 +660,7 @@
         border-radius: 12px;
         text-align: center;
         margin-bottom: 2rem;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
       }
 
       .news-list {
@@ -416,7 +687,7 @@
       }
 
       .news-item h3 {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 500;
         margin: 0;
         flex: 1;
@@ -460,7 +731,7 @@
         border-radius: 12px;
         border: 1px solid #fecaca;
         text-align: center;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
       }
 
       .loading {
@@ -490,7 +761,7 @@
       }
 
       .helper-text {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--text-muted);
         margin-top: -0.5rem;
         margin-bottom: 1rem;
@@ -503,13 +774,13 @@
         background: var(--bg-secondary);
         color: var(--text);
         cursor: pointer;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 500;
         transition: all 0.2s;
         font-family: inherit;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.35rem;
         white-space: nowrap;
         flex-shrink: 0;
         align-self: stretch;
@@ -536,9 +807,11 @@
       }
 
       @media (max-width: 768px) {
-        .lang-toggle {
+        .top-actions {
           top: 1rem;
           right: 1rem;
+          flex-direction: column;
+          align-items: flex-end;
         }
 
         header {
@@ -557,22 +830,86 @@
         .news-item h3 {
           margin-bottom: 0.5rem;
         }
+
+        .account-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .account-menu {
+          min-width: 220px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en">English</button>
-      <button class="lang-btn" data-lang="zh">中文</button>
-          <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+    <div class="top-actions">
+      <div class="account-menu-wrapper">
+        <button class="account-btn" id="accountBtn" type="button">
+          <span class="account-avatar" id="accountAvatarBtn">U</span>
+          <span id="accountBtnLabel" data-i18n="nav-login">Log in</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-header">
+            <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
+            <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
+          </div>
+          <div>
+            <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">Notifications</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <button class="account-menu-item" id="menuLogin" type="button" data-i18n="menu-login">Log in</button>
+            <div class="account-menu-controls">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+              </div>
+              <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+            </div>
+          </div>
+          <div class="account-menu-footer">
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="auth-logout">Log out</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <header>
-      <h1 data-i18n="title">📰 Daily Digest</h1>
-      <p data-i18n="subtitle">Get your daily news summary in seconds</p>
-    </header>
+      <section class="auth-page" id="authPage" style="display: none;">
+        <div class="auth-page-card">
+          <div class="auth-page-header">
+            <div>
+              <h2 data-i18n="auth-title">Account</h2>
+              <p data-i18n="auth-subtitle">Sign in to save preferences and history.</p>
+            </div>
+          </div>
+          <div class="auth-status" id="authStatus" data-i18n="auth-status-signed-out">Not signed in.</div>
+          <form id="authForm" class="auth-form">
+          <div>
+            <label for="authEmail" data-i18n="auth-email">Email</label>
+            <input id="authEmail" name="authEmail" type="email" data-i18n-placeholder="auth-email-placeholder" placeholder="name@example.com" required />
+          </div>
+          <div>
+            <label for="authPassword" data-i18n="auth-password">Password</label>
+            <input id="authPassword" name="authPassword" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" required />
+          </div>
+          <div class="auth-actions">
+            <button type="button" data-auth-action="login" data-i18n="auth-login">Log in</button>
+            <button type="button" class="btn-outline" data-auth-action="signup" data-i18n="auth-signup">Sign up</button>
+          </div>
+        </form>
+        <div class="auth-page-footer">
+          <button type="button" class="btn-outline auth-close" id="authCloseBtn" data-i18n="auth-close">Back</button>
+        </div>
+      </div>
+    </section>
 
-    <main>
+    <div id="mainContent">
+      <header>
+        <h1 data-i18n="title">📰 Daily Digest</h1>
+        <p data-i18n="subtitle">Get your daily news summary in seconds</p>
+      </header>
+
+      <main>
       <section class="card">
         <form id="interestForm">
           <div>
@@ -633,8 +970,11 @@
             </div>
             <p class="helper-text" data-i18n="address-helper">Enter your location or click to detect automatically</p>
           </div>
-          
-          <button type="submit" data-i18n="submit-btn">Generate Daily Digest</button>
+          <div class="form-actions">
+            <button type="submit" data-i18n="submit-btn">Generate Daily Digest</button>
+            <button type="button" class="btn-outline" id="savePreferences" data-i18n="save-preferences">Save Preferences</button>
+          </div>
+          <div class="pref-status" id="prefStatus" data-i18n="pref-status-idle">Save your preferences after you sign in.</div>
         </form>
         <p class="status" id="helper" data-i18n="helper-text">Fetching latest news from the past 24 hours...</p>
       </section>
@@ -653,7 +993,8 @@
         <div id="status" class="status" data-i18n="status-default">Please submit the form to get your daily digest.</div>
         <div class="news-list" id="newsList"></div>
       </section>
-    </main>
+      </main>
+    </div>
 
     <script>
       // 多語言支援 - 默認英文優先
@@ -663,6 +1004,56 @@
         zh: {
           title: "📰 每日摘要",
           subtitle: "幾秒內獲取您的個性化新聞摘要",
+          "nav-login": "登入",
+          "menu-guest-title": "訪客",
+          "menu-guest-subtitle": "登入以管理你的帳戶。",
+          "menu-home": "首頁",
+          "menu-login": "登入",
+          "menu-settings": "設定",
+          "menu-saved-preferences": "已儲存偏好",
+          "menu-notifications": "通知",
+          "menu-theme-toggle": "切換深色模式",
+          "auth-title": "帳戶",
+          "auth-subtitle": "登入後可保存偏好與歷史紀錄。",
+          "auth-email": "Email",
+          "auth-email-placeholder": "name@example.com",
+          "auth-password": "密碼",
+          "auth-password-placeholder": "至少 8 個字元",
+          "auth-login": "登入",
+          "auth-signup": "註冊",
+          "auth-logout": "登出",
+          "auth-close": "返回",
+          "auth-status-signed-out": "尚未登入。",
+          "auth-status-signed-in": "已登入：{email}",
+          "auth-status-error": "登入失敗，請檢查帳號密碼。",
+          "auth-status-logged-in": "你已登入。",
+          "auth-error-email-exists": "此 Email 已註冊。",
+          "auth-error-password-short": "密碼至少 8 個字元。",
+          "auth-error-missing": "請輸入 Email 與密碼。",
+          "save-preferences": "儲存偏好",
+          "pref-status-idle": "登入後可儲存偏好。",
+          "pref-status-saved": "偏好已儲存。",
+          "pref-status-error": "偏好儲存失敗。",
+          "pref-status-login-required": "請先登入再儲存偏好。",
+          "account-title": "帳戶設定",
+          "account-subtitle": "管理你的資料與密碼。",
+          "account-logged-in": "你已登入。",
+          "account-profile-title": "個人資料",
+          "account-username": "使用者名稱",
+          "account-update-profile": "更新資料",
+          "account-profile-idle": "可隨時更新使用者名稱。",
+          "account-profile-success": "使用者名稱已更新。",
+          "account-profile-error": "更新使用者名稱失敗。",
+          "saved-preferences-title": "已儲存偏好",
+          "account-password-title": "變更密碼",
+          "account-current-password": "目前密碼",
+          "account-new-password": "新密碼",
+          "account-confirm-password": "確認新密碼",
+          "account-update-password": "更新密碼",
+          "account-password-idle": "可隨時更新密碼。",
+          "account-password-mismatch": "新密碼不一致。",
+          "account-password-success": "密碼已更新。",
+          "account-password-error": "更新密碼失敗。",
           "topic-label": "您對哪些新聞主題感興趣？",
           "topic-placeholder": "例如：財經、科技、生活、AI",
           "address-label": "位置（城市、州/省、國家）",
@@ -687,8 +1078,58 @@
           "ai-disabled": "AI 摘要功能目前不可用。新聞文章將在沒有 AI 生成摘要的情況下顯示。"
         },
         en: {
-          title: "📰 Daily Digest",
+          title: "📰 DAILY DIGEST",
           subtitle: "Get your personalized news summary in seconds",
+          "nav-login": "Log in",
+          "menu-guest-title": "Guest",
+          "menu-guest-subtitle": "Sign in to manage your account.",
+          "menu-home": "Home",
+          "menu-login": "Log in",
+          "menu-settings": "Settings",
+          "menu-saved-preferences": "Saved Preferences",
+          "menu-notifications": "Notifications",
+          "menu-theme-toggle": "Toggle Theme",
+          "auth-title": "Account",
+          "auth-subtitle": "Sign in to save preferences and history.",
+          "auth-email": "Email",
+          "auth-email-placeholder": "name@example.com",
+          "auth-password": "Password",
+          "auth-password-placeholder": "At least 8 characters",
+          "auth-login": "Log in",
+          "auth-signup": "Sign up",
+          "auth-logout": "Log out",
+          "auth-close": "Back",
+          "auth-status-signed-out": "Not signed in.",
+          "auth-status-signed-in": "Signed in as {email}",
+          "auth-status-error": "Sign-in failed. Check your credentials.",
+          "auth-status-logged-in": "You're logged in.",
+          "auth-error-email-exists": "Email already exists.",
+          "auth-error-password-short": "Password must be at least 8 characters.",
+          "auth-error-missing": "Email and password are required.",
+          "save-preferences": "Save Preferences",
+          "pref-status-idle": "Save your preferences after you sign in.",
+          "pref-status-saved": "Preferences saved.",
+          "pref-status-error": "Failed to save preferences.",
+          "pref-status-login-required": "Please sign in before saving preferences.",
+          "account-title": "Account Settings",
+          "account-subtitle": "Manage your profile and password.",
+          "account-logged-in": "You're logged in.",
+          "account-profile-title": "Profile",
+          "account-username": "Username",
+          "account-update-profile": "Update profile",
+          "account-profile-idle": "Update your username anytime.",
+          "account-profile-success": "Username updated.",
+          "account-profile-error": "Failed to update username.",
+          "saved-preferences-title": "Saved Preferences",
+          "account-password-title": "Change password",
+          "account-current-password": "Current password",
+          "account-new-password": "New password",
+          "account-confirm-password": "Confirm new password",
+          "account-update-password": "Update password",
+          "account-password-idle": "Update your password anytime.",
+          "account-password-mismatch": "Passwords do not match.",
+          "account-password-success": "Password updated.",
+          "account-password-error": "Failed to update password.",
           "topic-label": "What news topics interest you?",
           "topic-placeholder": "e.g., Finance, Tech, Lifestyle, AI",
           "address-label": "Location (City, State/Province, Country)",
@@ -714,6 +1155,11 @@
         }
       };
 
+      const TOKEN_KEY = 'dailyDigestToken';
+      const LANG_KEY = 'dailyDigestLang';
+      const THEME_KEY = 'dailyDigestTheme';
+      let currentUser = null;
+
       function updateLanguage(lang) {
         currentLang = lang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -731,7 +1177,269 @@
         document.querySelectorAll('.lang-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.lang === lang);
         });
+        renderAuthState();
+        try {
+          window.localStorage.setItem(LANG_KEY, lang);
+        } catch (e) {
+          console.error('lang save error', e);
+        }
       }
+
+      const authStatus = document.getElementById('authStatus');
+      const authForm = document.getElementById('authForm');
+      const authEmailInput = document.getElementById('authEmail');
+      const authPasswordInput = document.getElementById('authPassword');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const savePreferencesBtn = document.getElementById('savePreferences');
+      const prefStatus = document.getElementById('prefStatus');
+      const addressInput = document.getElementById('address');
+      const topicInput = document.getElementById('topic');
+      const accountBtn = document.getElementById('accountBtn');
+      const accountBtnLabel = document.getElementById('accountBtnLabel');
+      const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const accountMenu = document.getElementById('accountMenu');
+      const menuHome = document.getElementById('menuHome');
+      const menuLogin = document.getElementById('menuLogin');
+      const menuAccountSettings = document.getElementById('menuAccountSettings');
+      const menuSavedPreferences = document.getElementById('menuSavedPreferences');
+      const menuNotifications = document.getElementById('menuNotifications');
+      const themeToggle = document.getElementById('themeToggle');
+      const menuLogout = document.getElementById('menuLogout');
+      const menuUsername = document.getElementById('menuUsername');
+      const menuEmail = document.getElementById('menuEmail');
+      const authPage = document.getElementById('authPage');
+      const authCloseBtn = document.getElementById('authCloseBtn');
+      const mainContent = document.getElementById('mainContent');
+      let isAuthOpen = false;
+      let isMenuOpen = false;
+
+      function getAuthToken() {
+        try {
+          return window.localStorage.getItem(TOKEN_KEY);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setAuthToken(token) {
+        try {
+          if (token) {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY);
+          }
+        } catch (e) {
+          console.error('auth token storage error', e);
+        }
+      }
+
+      function getDisplayName(email) {
+        if (!email) return '';
+        const parts = email.split('@');
+        return parts[0] || email;
+      }
+
+      function showAuthPage() {
+        if (authPage) authPage.style.display = 'flex';
+        if (mainContent) mainContent.style.display = 'none';
+        isAuthOpen = true;
+      }
+
+      function hideAuthPage() {
+        if (authPage) authPage.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
+        isAuthOpen = false;
+      }
+
+      function openMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        isMenuOpen = true;
+      }
+
+      function closeMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        isMenuOpen = false;
+      }
+
+      function getAuthErrorMessage(errorCode) {
+        if (!errorCode) return translations[currentLang]['auth-status-error'];
+        if (errorCode === 'email_already_exists') return translations[currentLang]['auth-error-email-exists'];
+        if (errorCode === 'password_too_short') return translations[currentLang]['auth-error-password-short'];
+        if (errorCode === 'email_and_password_required') return translations[currentLang]['auth-error-missing'];
+        return translations[currentLang]['auth-status-error'];
+      }
+
+      function renderAuthState() {
+        if (!authStatus) return;
+        if (currentUser) {
+          authStatus.textContent = translations[currentLang]['auth-status-logged-in'];
+          if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+          if (authEmailInput) authEmailInput.disabled = true;
+          if (authPasswordInput) authPasswordInput.disabled = true;
+          if (savePreferencesBtn) {
+            savePreferencesBtn.disabled = false;
+            savePreferencesBtn.classList.remove('btn-disabled');
+            savePreferencesBtn.title = '';
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-idle'];
+          const displayName = currentUser.username || getDisplayName(currentUser.email);
+          if (accountBtnLabel) accountBtnLabel.textContent = displayName;
+          if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (menuUsername) menuUsername.textContent = displayName;
+          if (menuEmail) menuEmail.textContent = currentUser.email || '';
+          // username chip removed
+          if (menuLogin) menuLogin.hidden = true;
+          if (menuAccountSettings) menuAccountSettings.hidden = false;
+          if (menuSavedPreferences) menuSavedPreferences.hidden = false;
+          if (menuNotifications) menuNotifications.hidden = false;
+          if (menuLogout) menuLogout.hidden = false;
+          hideAuthPage();
+        } else {
+          authStatus.textContent = translations[currentLang]['auth-status-signed-out'];
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (authEmailInput) authEmailInput.disabled = false;
+          if (authPasswordInput) authPasswordInput.disabled = false;
+          if (savePreferencesBtn) {
+            savePreferencesBtn.disabled = true;
+            savePreferencesBtn.classList.add('btn-disabled');
+            savePreferencesBtn.title = translations[currentLang]['pref-status-login-required'];
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-login-required'];
+          if (accountBtnLabel) accountBtnLabel.textContent = translations[currentLang]['nav-login'];
+          if (accountAvatarBtn) accountAvatarBtn.textContent = 'U';
+          if (menuUsername) menuUsername.textContent = translations[currentLang]['menu-guest-title'];
+          if (menuEmail) menuEmail.textContent = translations[currentLang]['menu-guest-subtitle'];
+          // username chip removed
+          if (menuLogin) menuLogin.hidden = false;
+          if (menuAccountSettings) menuAccountSettings.hidden = true;
+          if (menuSavedPreferences) menuSavedPreferences.hidden = true;
+          if (menuNotifications) menuNotifications.hidden = true;
+          if (menuLogout) menuLogout.hidden = true;
+          if (isAuthOpen) {
+            showAuthPage();
+          } else {
+            hideAuthPage();
+          }
+        }
+      }
+
+      async function loadCurrentUser() {
+        const token = getAuthToken();
+        if (!token) {
+          currentUser = null;
+          renderAuthState();
+          return;
+        }
+        try {
+          const resp = await fetch('/api/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) {
+            setAuthToken(null);
+            currentUser = null;
+            renderAuthState();
+            return;
+          }
+          const data = await resp.json();
+          currentUser = data.user || null;
+          renderAuthState();
+          await loadPreferences();
+        } catch (e) {
+          console.error('loadCurrentUser error', e);
+        }
+      }
+
+      async function loadPreferences() {
+        const token = getAuthToken();
+        if (!token) return;
+        try {
+          const resp = await fetch('/api/preferences', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) return;
+          const data = await resp.json();
+          const pref = data.preferences;
+          if (!pref) return;
+          if (pref.topic && topicInput) topicInput.value = pref.topic;
+          if (pref.region && addressInput) addressInput.value = pref.region;
+          if (pref.lang) updateLanguage(pref.lang);
+          if (pref.sources && Array.isArray(pref.sources)) {
+            const select = document.getElementById('presetSource');
+            if (select && pref.sources[0]) {
+              select.value = pref.sources[0];
+            }
+          }
+        } catch (e) {
+          console.error('loadPreferences error', e);
+        }
+      }
+
+      function collectPreferences() {
+        const presetSource = document.getElementById('presetSource')?.value || '';
+        return {
+          topic: topicInput?.value?.trim() || null,
+          region: addressInput?.value?.trim() || null,
+          lang: currentLang,
+          sources: presetSource ? [presetSource] : null
+        };
+      }
+
+      async function savePreferences() {
+        const token = getAuthToken();
+        if (!token) {
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-login-required'];
+          return;
+        }
+        try {
+          const payload = collectPreferences();
+          const resp = await fetch('/api/preferences', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) {
+            if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
+            return;
+          }
+          const savedResp = await fetch('/api/saved-preferences', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!savedResp.ok) {
+            if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
+            return;
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-saved'];
+        } catch (e) {
+          console.error('savePreferences error', e);
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
+        }
+      }
+
+      // 初始化：設置默認語言
+      let initialLang = 'en';
+      try {
+        const storedLang = window.localStorage.getItem(LANG_KEY);
+        if (storedLang === 'en' || storedLang === 'zh') {
+          initialLang = storedLang;
+        }
+      } catch (e) {
+        console.error('lang read error', e);
+      }
+      updateLanguage(initialLang);
 
       document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -739,13 +1447,137 @@
         });
       });
 
-      // 初始化：設置默認語言
-      updateLanguage('en');
+      if (authForm) {
+        authForm.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const action = target.getAttribute('data-auth-action');
+          if (!action) return;
+          const email = authEmailInput?.value?.trim() || '';
+          const password = authPasswordInput?.value || '';
+          if (!email || !password) {
+            authStatus.textContent = translations[currentLang]['auth-error-missing'];
+            return;
+          }
+          const endpoint = action === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+          try {
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              authStatus.textContent = getAuthErrorMessage(data.error);
+              return;
+            }
+            if (data.token) {
+              setAuthToken(data.token);
+            }
+            currentUser = data.user || null;
+            isAuthOpen = false;
+            closeMenu();
+            renderAuthState();
+            await loadPreferences();
+          } catch (e) {
+            console.error('auth error', e);
+            authStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          setAuthToken(null);
+          currentUser = null;
+          isAuthOpen = false;
+          closeMenu();
+          renderAuthState();
+        });
+      }
+
+      if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+          if (isMenuOpen) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+      }
+
+      if (menuLogin) {
+        menuLogin.addEventListener('click', () => {
+          showAuthPage();
+          authEmailInput?.focus();
+          closeMenu();
+        });
+      }
+
+      if (menuAccountSettings) {
+        menuAccountSettings.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/account.html';
+        });
+      }
+
+      if (menuSavedPreferences) {
+        menuSavedPreferences.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/preferences.html';
+        });
+      }
+
+      if (menuNotifications) {
+        menuNotifications.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/notifications.html';
+        });
+      }
+
+      if (menuHome) {
+        menuHome.addEventListener('click', () => {
+          window.location.href = '/';
+        });
+      }
+
+      if (menuLogout) {
+        menuLogout.addEventListener('click', () => {
+          setAuthToken(null);
+          currentUser = null;
+          isAuthOpen = false;
+          closeMenu();
+          renderAuthState();
+        });
+      }
+
+      if (authCloseBtn) {
+        authCloseBtn.addEventListener('click', () => {
+          hideAuthPage();
+        });
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!isMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (accountMenu && accountMenu.contains(target)) return;
+        if (accountBtn && accountBtn.contains(target)) return;
+        closeMenu();
+      });
+
+      if (savePreferencesBtn) {
+        savePreferencesBtn.addEventListener('click', () => {
+          savePreferences();
+        });
+      }
+
+
+      loadCurrentUser();
 
       // 設置地址輸入框高度與topic輸入框一致
-      const addressInput = document.getElementById('address');
-      const topicInput = document.getElementById('topic');
-      
       function syncInputHeight() {
         if (topicInput && addressInput) {
           const topicHeight = topicInput.offsetHeight;
@@ -950,7 +1782,6 @@
         }
       });
 // ----- Dark mode toggle -----
-    const THEME_KEY = 'dailyDigestTheme';
     function applyTheme(theme) {
       const body = document.body;
       if (theme === 'dark') {
@@ -958,9 +1789,8 @@
       } else {
         body.classList.remove('dark');
       }
-      const toggle = document.getElementById('themeToggle');
-      if (toggle) {
-        toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+      if (themeToggle) {
+        themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
       }
     }
 
@@ -979,9 +1809,8 @@
         console.error('theme read error', e);
       }
       applyTheme(theme);
-      const toggle = document.getElementById('themeToggle');
-      if (toggle) {
-        toggle.addEventListener('click', () => {
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
           const current = document.body.classList.contains('dark') ? 'dark' : 'light';
           const next = current === 'dark' ? 'light' : 'dark';
           applyTheme(next);

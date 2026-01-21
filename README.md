@@ -15,6 +15,8 @@ It supports:
 - AI summaries using Groq models
 - City‑level location detection  
 - Dark mode UI  
+- Email/password auth (SQLite)
+- Settings + saved preferences + notifications pages
 - Fast loading with skeleton screens  
 
 This version is optimized for **Groq** as a free and high‑performance AI backend.
@@ -37,6 +39,11 @@ This version is optimized for **Groq** as a free and high‑performance AI backe
 - Dark mode  
 - Loading skeleton  
 - City‑level geolocation detection (e.g., “Chicago, United States”)
+- Account menu with settings, notifications, and saved preferences
+- Saved preferences history (multi‑entry, deletable, with timestamps)
+- Notification settings for daily digest time
+- Preferences saved from Home appear in Saved Preferences history
+- Backend scheduler generates in‑app notifications on schedule
 
 ---
 
@@ -55,6 +62,11 @@ python backend/app.py
 ### 3. Open in browser
 ```
 http://localhost:5000
+```
+
+If port 5000 is in use, run:
+```bash
+PORT=5001 python backend/app.py
 ```
 
 ---
@@ -87,16 +99,46 @@ OLLAMA_URL=http://localhost:11434/v1
 OLLAMA_MODEL=llama3.2:3b
 ```
 
+### ▶ App settings (optional)
+```
+SECRET_KEY=your_secret_key
+DB_PATH=backend/app.db
+```
+
 ---
 
 ## 📁 Project Structure
 
 ```
 backend/app.py        # Groq / OpenAI / Ollama automatic provider
-public/index.html     # RSS selector + geolocation + dark mode
+backend/app.db        # SQLite user data (auto-created)
+public/index.html     # Main UI + auth entry
+public/account.html   # Settings (account + notification settings)
+public/preferences.html # Saved preferences history
+public/notifications.html # Notifications feed
 requirements.txt
 Dockerfile
 ```
+
+---
+
+## 🔐 Auth & Preferences API
+
+- `POST /api/auth/signup` (email + password)
+- `POST /api/auth/login`
+- `GET /api/me`
+- `POST /api/auth/change-password`
+- `POST /api/auth/update-profile`
+- `GET /api/preferences`
+- `PUT /api/preferences`
+- `GET /api/saved-preferences`
+- `POST /api/saved-preferences`
+- `DELETE /api/saved-preferences/:id`
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `DELETE /api/notifications/:id`
+- `GET /api/notification-settings`
+- `PUT /api/notification-settings`
 
 ---
 
@@ -104,4 +146,3 @@ Dockerfile
 
 Free for personal and non‑commercial use.  
 Feel free to modify and extend the project.
-

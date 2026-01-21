@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Saved Preferences</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+      :root {
+        --bg: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --text: #1a1a1a;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
+        --border: #e5e7eb;
+        --border-light: #f3f4f6;
+        --primary: #000000;
+        --accent: #6366f1;
+        --accent-light: #e0e7ff;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+      }
+
+      body.dark {
+        --bg: #020617;
+        --bg-secondary: #020617;
+        --text: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --border: #1f2937;
+        --border-light: #111827;
+        --primary: #f9fafb;
+        --accent: #6366f1;
+        --accent-light: rgba(129, 140, 248, 0.18);
+        --success: #22c55e;
+        --warning: #facc15;
+        --danger: #f97373;
+        --card-shadow: 0 22px 60px rgba(15, 23, 42, 0.95);
+        --error: #f97373;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .top-actions {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .account-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: white;
+        font-weight: 600;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.85rem;
+      }
+
+      body.dark .account-btn {
+        background: #020617;
+        border-color: #1f2937;
+        color: #e5e7eb;
+      }
+
+      .account-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .account-menu-wrapper {
+        position: relative;
+      }
+
+      .account-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.6rem);
+        min-width: 260px;
+        padding: 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+        color: #0f172a;
+        z-index: 200;
+      }
+
+      body.dark .account-menu {
+        background: #0b0f19;
+        border-color: #1f2937;
+        color: #f9fafb;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.6);
+      }
+
+      .account-menu-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        margin-bottom: 0.75rem;
+      }
+
+      .account-menu-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .account-menu-email {
+        color: rgba(15, 23, 42, 0.6);
+        font-size: 0.85rem;
+        word-break: break-all;
+      }
+
+      body.dark .account-menu-email {
+        color: rgba(226, 232, 240, 0.8);
+      }
+
+      .account-menu-item {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: #0f172a;
+        text-align: left;
+        padding: 0.55rem 0.4rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      .account-menu-item:hover {
+        background: rgba(15, 23, 42, 0.06);
+      }
+
+      body.dark .account-menu-item {
+        color: #e5e7eb;
+      }
+
+      body.dark .account-menu-item:hover {
+        background: rgba(148, 163, 184, 0.15);
+      }
+
+      .account-menu-footer {
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+      }
+
+      .account-menu-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .account-menu .lang-toggle {
+        background: #ffffff;
+        border-color: #e2e8f0;
+      }
+
+      .account-menu .lang-btn.active {
+        background: #0f172a;
+        color: #ffffff;
+      }
+
+      body.dark .account-menu .lang-toggle {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(148, 163, 184, 0.2);
+      }
+
+      body.dark .account-menu .lang-btn.active {
+        background: #f9fafb;
+        color: #0b0f19;
+      }
+
+      .lang-toggle {
+        display: flex;
+        gap: 0.35rem;
+        background: #ffffff;
+        padding: 0.3rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .lang-btn {
+        padding: 0.35rem 0.75rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.8rem;
+      }
+
+      .lang-btn.active {
+        background: #0f172a;
+        color: #ffffff;
+      }
+
+      .theme-btn {
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.8rem;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+      }
+
+      header {
+        text-align: center;
+        padding: 4.5rem 1.5rem 2rem;
+      }
+
+      header h1 {
+        font-size: clamp(2.2rem, 6vw, 3.5rem);
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        color: var(--text-secondary);
+      }
+
+
+      main {
+        max-width: 860px;
+        margin: 0 auto 4rem;
+        padding: 0 1.5rem;
+      }
+
+      .card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      .saved-pref-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border-light);
+        font-size: 0.95rem;
+      }
+
+      .saved-pref-row:last-child {
+        border-bottom: none;
+      }
+
+      .status {
+        margin-top: 0.75rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .btn-small {
+        padding: 0.35rem 0.7rem;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: transparent;
+        cursor: pointer;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-actions">
+      <div class="account-menu-wrapper">
+        <button class="account-btn" id="accountBtn" type="button">
+          <span class="account-avatar" id="accountAvatarBtn">U</span>
+          <span id="accountBtnLabel" data-i18n="nav-account">Account</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-header">
+            <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
+            <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
+          </div>
+          <div>
+            <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">Notifications</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <div class="account-menu-controls">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en" data-i18n="lang-english">English</button>
+                <button class="lang-btn" data-lang="zh" data-i18n="lang-chinese">中文</button>
+              </div>
+              <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+            </div>
+          </div>
+          <div class="account-menu-footer">
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="menu-logout">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <h1 data-i18n="saved-preferences-title">Saved Preferences</h1>
+      <p data-i18n="saved-preferences-subtitle">Your latest saved settings.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+          <button class="btn-small" id="savePreferencesNow" type="button" data-i18n="saved-preferences-save">Save current preferences</button>
+        </div>
+        <div id="savedPreferencesContent"></div>
+        <div class="status" id="savedPreferencesStatus"></div>
+      </section>
+    </main>
+
+    <script>
+      const translations = {
+        en: {
+          "nav-account": "Account",
+          "menu-guest-title": "Guest",
+          "menu-guest-subtitle": "Sign in to manage your account.",
+          "menu-home": "Home",
+          "menu-notifications": "Notifications",
+          "menu-settings": "Settings",
+          "menu-saved-preferences": "Saved Preferences",
+          "menu-logout": "Log out",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "saved-preferences-title": "Saved Preferences",
+          "saved-preferences-subtitle": "Your latest saved settings.",
+          "saved-preferences-save": "Save current preferences",
+          "saved-preferences-empty": "No saved preferences.",
+          "saved-preferences-load-failed": "Failed to load preferences.",
+          "saved-preferences-save-failed": "Failed to save preferences.",
+          "saved-preferences-delete": "Delete"
+        },
+        zh: {
+          "nav-account": "帳號",
+          "menu-guest-title": "訪客",
+          "menu-guest-subtitle": "登入後才能管理帳號。",
+          "menu-home": "首頁",
+          "menu-notifications": "通知",
+          "menu-settings": "設定",
+          "menu-saved-preferences": "已存偏好",
+          "menu-logout": "登出",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "saved-preferences-title": "已存偏好",
+          "saved-preferences-subtitle": "你最近儲存的設定。",
+          "saved-preferences-save": "儲存目前偏好",
+          "saved-preferences-empty": "目前沒有已存偏好。",
+          "saved-preferences-load-failed": "讀取偏好失敗。",
+          "saved-preferences-save-failed": "儲存偏好失敗。",
+          "saved-preferences-delete": "刪除"
+        }
+      };
+      const TOKEN_KEY = 'dailyDigestToken';
+      const THEME_KEY = 'dailyDigestTheme';
+      const LANG_KEY = 'dailyDigestLang';
+      const accountBtn = document.getElementById('accountBtn');
+      const accountBtnLabel = document.getElementById('accountBtnLabel');
+      const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const accountMenu = document.getElementById('accountMenu');
+      const menuHome = document.getElementById('menuHome');
+      const menuAccountSettings = document.getElementById('menuAccountSettings');
+      const menuSavedPreferences = document.getElementById('menuSavedPreferences');
+      const menuNotifications = document.getElementById('menuNotifications');
+      const themeToggle = document.getElementById('themeToggle');
+      const menuLogout = document.getElementById('menuLogout');
+      const menuUsername = document.getElementById('menuUsername');
+      const menuEmail = document.getElementById('menuEmail');
+      const savedPreferencesContent = document.getElementById('savedPreferencesContent');
+      const savedPreferencesStatus = document.getElementById('savedPreferencesStatus');
+      let isMenuOpen = false;
+      let currentLang = 'en';
+      let savedPreferencesCache = [];
+      let isAuthenticated = false;
+
+      function getAuthToken() {
+        try {
+          return window.localStorage.getItem(TOKEN_KEY);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setAuthToken(token) {
+        try {
+          if (token) {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY);
+          }
+        } catch (e) {
+          console.error('auth token storage error', e);
+        }
+      }
+
+      function getDisplayName(email) {
+        if (!email) return '';
+        const parts = email.split('@');
+        return parts[0] || email;
+      }
+
+      function openMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        isMenuOpen = true;
+      }
+
+      function closeMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        isMenuOpen = false;
+      }
+
+      async function loadCurrentUser() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+        try {
+          const resp = await fetch('/api/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            setAuthToken(null);
+            window.location.href = '/';
+            return;
+          }
+          const data = await resp.json();
+          const user = data.user || {};
+          isAuthenticated = true;
+          const displayName = user.username || getDisplayName(user.email || '');
+          if (accountBtnLabel) accountBtnLabel.textContent = displayName || 'Account';
+          if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (menuUsername) menuUsername.textContent = displayName || 'Guest';
+          if (menuEmail) menuEmail.textContent = user.email || '';
+        } catch (e) {
+          console.error('loadCurrentUser error', e);
+        }
+      }
+
+      async function loadSavedPreferences() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+        const container = document.getElementById('savedPreferencesContent');
+        const status = document.getElementById('savedPreferencesStatus');
+        if (!container) return;
+        container.innerHTML = '';
+        try {
+          const resp = await fetch('/api/saved-preferences', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            if (status) status.textContent = translations[currentLang]['saved-preferences-load-failed'];
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          savedPreferencesCache = items;
+          renderSavedPreferences();
+        } catch (e) {
+          console.error('loadSavedPreferences error', e);
+          if (status) status.textContent = translations[currentLang]['saved-preferences-load-failed'];
+        }
+      }
+
+      function renderSavedPreferences() {
+        const container = document.getElementById('savedPreferencesContent');
+        const status = document.getElementById('savedPreferencesStatus');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!savedPreferencesCache.length) {
+          if (status) status.textContent = translations[currentLang]['saved-preferences-empty'];
+          return;
+        }
+        if (status) status.textContent = '';
+        container.innerHTML = savedPreferencesCache
+          .map(item => {
+            const sources = Array.isArray(item.sources) ? item.sources.join(', ') : '-';
+            const created = item.created_at || '-';
+            return `
+              <div class="saved-pref-row" data-id="${item.id}">
+                <div>
+                  <strong>${item.topic || '-'}</strong>
+                  <div>${item.region || '-'} • ${item.lang || '-'} • ${sources}</div>
+                  <div>${created}</div>
+                </div>
+                <button class="btn-small" data-action="delete" data-id="${item.id}">${translations[currentLang]['saved-preferences-delete']}</button>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      const savePrefButton = document.getElementById('savePreferencesNow');
+      if (savePrefButton) {
+        savePrefButton.addEventListener('click', async () => {
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            const resp = await fetch('/api/saved-preferences', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({})
+            });
+            if (!resp.ok) {
+              if (savedPreferencesStatus) savedPreferencesStatus.textContent = translations[currentLang]['saved-preferences-save-failed'];
+              return;
+            }
+            loadSavedPreferences();
+          } catch (e) {
+            console.error('save preferences error', e);
+          }
+        });
+      }
+
+      if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+          if (isMenuOpen) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+      }
+
+      if (menuHome) {
+        menuHome.addEventListener('click', () => {
+          window.location.href = '/';
+        });
+      }
+
+      if (menuAccountSettings) {
+        menuAccountSettings.addEventListener('click', () => {
+          window.location.href = '/account.html';
+        });
+      }
+
+      if (menuSavedPreferences) {
+        menuSavedPreferences.addEventListener('click', () => {
+          window.location.href = '/preferences.html';
+        });
+      }
+
+      if (menuNotifications) {
+        menuNotifications.addEventListener('click', () => {
+          window.location.href = '/notifications.html';
+        });
+      }
+
+      const langButtons = document.querySelectorAll('.lang-btn');
+
+      function applyLangSelection(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+        try {
+          window.localStorage.setItem(LANG_KEY, lang);
+        } catch (e) {
+          console.error('lang save error', e);
+        }
+        langButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        updateTranslations();
+        renderSavedPreferences();
+      }
+
+      function initLanguage() {
+        let lang = 'en';
+        try {
+          const stored = window.localStorage.getItem(LANG_KEY);
+          if (stored === 'en' || stored === 'zh') {
+            lang = stored;
+          }
+        } catch (e) {
+          console.error('lang read error', e);
+        }
+        applyLangSelection(lang);
+      }
+
+      if (langButtons.length) {
+        langButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            applyLangSelection(btn.dataset.lang);
+          });
+        });
+      }
+
+      if (menuLogout) {
+        menuLogout.addEventListener('click', () => {
+          setAuthToken(null);
+          window.location.href = '/';
+        });
+      }
+
+      if (savedPreferencesContent) {
+        savedPreferencesContent.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const action = target.getAttribute('data-action');
+          const id = target.getAttribute('data-id');
+          if (action !== 'delete' || !id) return;
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            await fetch(`/api/saved-preferences/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            loadSavedPreferences();
+          } catch (e) {
+            console.error('delete preference error', e);
+          }
+        });
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!isMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (accountMenu && accountMenu.contains(target)) return;
+        if (accountBtn && accountBtn.contains(target)) return;
+        closeMenu();
+      });
+
+      function updateTranslations() {
+        const skipKeysWhenAuthed = new Set([
+          'nav-account',
+          'menu-guest-title',
+          'menu-guest-subtitle'
+        ]);
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (isAuthenticated && skipKeysWhenAuthed.has(key)) {
+            return;
+          }
+          if (translations[currentLang][key]) {
+            el.textContent = translations[currentLang][key];
+          }
+        });
+      }
+
+      function applyTheme(theme) {
+        const body = document.body;
+        if (theme === 'dark') {
+          body.classList.add('dark');
+        } else {
+          body.classList.remove('dark');
+        }
+        if (themeToggle) {
+          themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+      }
+
+      function initTheme() {
+        let theme = 'light';
+        const stored = window.localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        }
+        applyTheme(theme);
+        if (themeToggle) {
+          themeToggle.addEventListener('click', () => {
+            const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            window.localStorage.setItem(THEME_KEY, next);
+          });
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        initLanguage();
+        loadCurrentUser();
+        loadSavedPreferences();
+      });
+    </script>
+  </body>
+</html>

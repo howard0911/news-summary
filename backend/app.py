@@ -1,6 +1,10 @@
 import os
 import re
 import json
+import sqlite3
+import threading
+import time
+import secrets
 import requests
 from datetime import datetime
 from pathlib import Path
@@ -10,9 +14,120 @@ from urllib.parse import quote_plus
 import feedparser
 from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request, send_from_directory
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from werkzeug.security import check_password_hash, generate_password_hash
 from openai import OpenAI
 
 app = Flask(__name__, static_folder="../public", static_url_path="")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
+
+# ------------------------------
+# Database (SQLite)
+# ------------------------------
+DB_PATH = os.getenv("DB_PATH", str(Path(__file__).parent / "app.db"))
+
+
+def get_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db() -> None:
+    schema = """
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        username TEXT,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS preferences (
+        user_id INTEGER PRIMARY KEY,
+        topic TEXT,
+        region TEXT,
+        lang TEXT,
+        sources TEXT,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS saved_preferences (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        topic TEXT,
+        region TEXT,
+        lang TEXT,
+        sources TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS notification_settings (
+        user_id INTEGER PRIMARY KEY,
+        digest_time TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 0,
+        last_sent_date TEXT,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        read_at TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS digests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        digest_date TEXT NOT NULL,
+        summary_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """
+    conn = get_db()
+    try:
+        conn.executescript(schema)
+        # Best-effort migration for older databases.
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        except sqlite3.OperationalError:
+            pass
+        conn.commit()
+    finally:
+        conn.close()
+
+
+serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+init_db()
+
+
+def now_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
+def generate_token(user_id: int) -> str:
+    return serializer.dumps({"user_id": user_id})
+
+
+def verify_token(token: str, max_age_seconds: int = 60 * 60 * 24 * 14) -> Optional[int]:
+    try:
+        data = serializer.loads(token, max_age=max_age_seconds)
+        return int(data.get("user_id"))
+    except (BadSignature, SignatureExpired, ValueError, TypeError):
+        return None
+
+
+def require_auth() -> Optional[int]:
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "", 1).strip()
+        return verify_token(token)
+    return None
 
 # ------------------------------
 # Load environment variables
@@ -282,6 +397,445 @@ def health_check():
     return {"status": "ok"}
 
 
+@app.post("/api/auth/signup")
+def signup():
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get("email") or "").strip().lower()
+    username = (payload.get("username") or "").strip()
+    password = payload.get("password") or ""
+    if not email or not password:
+        return jsonify({"error": "email_and_password_required"}), 400
+    if len(password) < 8:
+        return jsonify({"error": "password_too_short"}), 400
+    if not username:
+        username = email.split("@")[0] if "@" in email else email
+
+    created_at = now_iso()
+    password_hash = generate_password_hash(password)
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO users (email, username, password_hash, created_at) VALUES (?, ?, ?, ?)",
+            (email, username, password_hash, created_at),
+        )
+        conn.commit()
+        user_row = conn.execute("SELECT id, email, username FROM users WHERE email = ?", (email,)).fetchone()
+        user_id = user_row["id"]
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "email_already_exists"}), 409
+    finally:
+        conn.close()
+
+    token = generate_token(user_id)
+    return jsonify({"token": token, "user": {"id": user_id, "email": email, "username": user_row["username"]}})
+
+
+@app.post("/api/auth/login")
+def login():
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    if not email or not password:
+        return jsonify({"error": "email_and_password_required"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT id, email, username, password_hash FROM users WHERE email = ?", (email,)).fetchone()
+    finally:
+        conn.close()
+    if not row or not check_password_hash(row["password_hash"], password):
+        return jsonify({"error": "invalid_credentials"}), 401
+
+    token = generate_token(row["id"])
+    return jsonify({"token": token, "user": {"id": row["id"], "email": row["email"], "username": row["username"]}})
+
+
+@app.get("/api/me")
+def me():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT id, email, username, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return jsonify({"error": "user_not_found"}), 404
+    return jsonify(
+        {
+            "user": {
+                "id": row["id"],
+                "email": row["email"],
+                "username": row["username"],
+                "created_at": row["created_at"],
+            }
+        }
+    )
+
+
+@app.post("/api/auth/change-password")
+def change_password():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    current_password = payload.get("current_password") or ""
+    new_password = payload.get("new_password") or ""
+    if not current_password or not new_password:
+        return jsonify({"error": "passwords_required"}), 400
+    if len(new_password) < 8:
+        return jsonify({"error": "password_too_short"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row or not check_password_hash(row["password_hash"], current_password):
+            return jsonify({"error": "invalid_current_password"}), 401
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (generate_password_hash(new_password), user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
+@app.post("/api/auth/update-profile")
+def update_profile():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    username = (payload.get("username") or "").strip()
+    if not username:
+        return jsonify({"error": "username_required"}), 400
+    if len(username) < 2 or len(username) > 30:
+        return jsonify({"error": "username_invalid_length"}), 400
+
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET username = ? WHERE id = ?", (username, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok", "username": username})
+
+
+@app.get("/api/notification-settings")
+def get_notification_settings():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT digest_time, enabled, last_sent_date, updated_at FROM notification_settings WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return jsonify({"settings": None})
+    return jsonify(
+        {
+            "settings": {
+                "digest_time": row["digest_time"],
+                "enabled": bool(row["enabled"]),
+                "last_sent_date": row["last_sent_date"],
+                "updated_at": row["updated_at"],
+            }
+        }
+    )
+
+
+@app.put("/api/notification-settings")
+def update_notification_settings():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    digest_time = (payload.get("digest_time") or "").strip()
+    enabled = bool(payload.get("enabled"))
+    if not digest_time:
+        return jsonify({"error": "digest_time_required"}), 400
+
+    updated_at = now_iso()
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO notification_settings (user_id, digest_time, enabled, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                digest_time=excluded.digest_time,
+                enabled=excluded.enabled,
+                updated_at=excluded.updated_at
+            """,
+            (user_id, digest_time, int(enabled), updated_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok", "updated_at": updated_at})
+
+
+@app.get("/api/notifications")
+def list_notifications():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT id, title, body, created_at, read_at
+            FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 100
+            """,
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    items = []
+    for row in rows:
+        items.append(
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "body": row["body"],
+                "created_at": row["created_at"],
+                "read_at": row["read_at"],
+            }
+        )
+    return jsonify({"items": items})
+
+
+@app.post("/api/notifications/<int:notification_id>/read")
+def mark_notification_read(notification_id: int):
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            """
+            UPDATE notifications
+            SET read_at = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (now_iso(), notification_id, user_id),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return jsonify({"error": "not_found"}), 404
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
+@app.delete("/api/notifications/<int:notification_id>")
+def delete_notification(notification_id: int):
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "DELETE FROM notifications WHERE id = ? AND user_id = ?",
+            (notification_id, user_id),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return jsonify({"error": "not_found"}), 404
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
+@app.get("/api/preferences")
+def get_preferences():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT topic, region, lang, sources, updated_at FROM preferences WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return jsonify({"preferences": None})
+    return jsonify(
+        {
+            "preferences": {
+                "topic": row["topic"],
+                "region": row["region"],
+                "lang": row["lang"],
+                "sources": json.loads(row["sources"]) if row["sources"] else None,
+                "updated_at": row["updated_at"],
+            }
+        }
+    )
+
+
+@app.put("/api/preferences")
+def update_preferences():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    topic = (payload.get("topic") or "").strip() or None
+    region = (payload.get("region") or "").strip().lower() or None
+    lang = (payload.get("lang") or "").strip().lower() or None
+    sources = payload.get("sources")
+    sources_json = json.dumps(sources) if sources is not None else None
+    updated_at = now_iso()
+
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO preferences (user_id, topic, region, lang, sources, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                topic=excluded.topic,
+                region=excluded.region,
+                lang=excluded.lang,
+                sources=excluded.sources,
+                updated_at=excluded.updated_at
+            """,
+            (user_id, topic, region, lang, sources_json, updated_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok", "updated_at": updated_at})
+
+
+@app.get("/api/saved-preferences")
+def list_saved_preferences():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT id, topic, region, lang, sources, created_at
+            FROM saved_preferences
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    items = []
+    for row in rows:
+        items.append(
+            {
+                "id": row["id"],
+                "topic": row["topic"],
+                "region": row["region"],
+                "lang": row["lang"],
+                "sources": json.loads(row["sources"]) if row["sources"] else None,
+                "created_at": row["created_at"],
+            }
+        )
+    return jsonify({"items": items})
+
+
+@app.post("/api/saved-preferences")
+def save_preferences():
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    topic = (payload.get("topic") or "").strip() or None
+    region = (payload.get("region") or "").strip().lower() or None
+    lang = (payload.get("lang") or "").strip().lower() or None
+    sources = payload.get("sources")
+    sources_json = json.dumps(sources) if sources is not None else None
+
+    if not any([topic, region, lang, sources]):
+        conn = get_db()
+        try:
+            row = conn.execute(
+                "SELECT topic, region, lang, sources FROM preferences WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+        if row:
+            topic = topic or row["topic"]
+            region = region or row["region"]
+            lang = lang or row["lang"]
+            sources_json = sources_json or row["sources"]
+
+    created_at = now_iso()
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO saved_preferences (user_id, topic, region, lang, sources, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, topic, region, lang, sources_json, created_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok", "created_at": created_at})
+
+
+@app.delete("/api/saved-preferences/<int:pref_id>")
+def delete_saved_preference(pref_id: int):
+    user_id = require_auth()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "DELETE FROM saved_preferences WHERE id = ? AND user_id = ?",
+            (pref_id, user_id),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return jsonify({"error": "not_found"}), 404
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
 @app.get("/api/test-llm")
 def test_llm():
     """
@@ -429,6 +983,114 @@ Please respond in English in the following format:
     return {"things_to_watch": out, "takeaway": out}
 
 
+def build_user_digest_payload(user_id: int) -> Optional[Dict]:
+    conn = get_db()
+    try:
+        pref = conn.execute(
+            "SELECT topic, region, lang, sources FROM preferences WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    topic = "trending"
+    region_key = "us"
+    lang = "en"
+    sources = None
+    if pref:
+        topic = pref["topic"] or topic
+        region_key = pref["region"] or region_key
+        lang = pref["lang"] or lang
+        sources = json.loads(pref["sources"]) if pref["sources"] else None
+
+    if region_key not in REGION_CONFIG:
+        region_key = "us"
+
+    region = REGION_CONFIG.get(region_key, DEFAULT_REGION)
+    feed_url = build_google_news_feed(topic, region)
+    if sources:
+        # If sources provided, use first as custom URL/preset; for now default to Google News.
+        pass
+    entries = fetch_feed_entries(feed_url)
+    if not entries:
+        return None
+
+    news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
+    takeaway = generate_takeaway(news_items, lang)
+    return {"items": news_items, "takeaway": takeaway, "lang": lang}
+
+
+def create_digest_and_notification(user_id: int) -> bool:
+    payload = build_user_digest_payload(user_id)
+    if not payload:
+        return False
+
+    digest_date = datetime.utcnow().strftime("%Y-%m-%d")
+    summary_json = json.dumps(payload)
+    created_at = now_iso()
+    title = "Daily Digest"
+    body = payload.get("takeaway", {}).get("takeaway") or "Your daily digest is ready."
+
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO digests (user_id, digest_date, summary_json, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, digest_date, summary_json, created_at),
+        )
+        conn.execute(
+            """
+            INSERT INTO notifications (user_id, title, body, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, title, body, created_at),
+        )
+        conn.execute(
+            "UPDATE notification_settings SET last_sent_date = ? WHERE user_id = ?",
+            (digest_date, user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return True
+
+
+def notification_loop():
+    while True:
+        try:
+            now_local = datetime.now()
+            current_time = now_local.strftime("%H:%M")
+            today = now_local.strftime("%Y-%m-%d")
+            conn = get_db()
+            try:
+                rows = conn.execute(
+                    """
+                    SELECT user_id, digest_time, enabled, last_sent_date
+                    FROM notification_settings
+                    WHERE enabled = 1
+                    """
+                ).fetchall()
+            finally:
+                conn.close()
+            for row in rows:
+                if row["digest_time"] != current_time:
+                    continue
+                if row["last_sent_date"] == today:
+                    continue
+                create_digest_and_notification(row["user_id"])
+        except Exception as e:
+            print("notification_loop error:", e)
+        time.sleep(60)
+
+
+def start_notification_scheduler():
+    t = threading.Thread(target=notification_loop, daemon=True)
+    t.start()
+
+
 def extract_section(text: str, section_name: str) -> Optional[str]:
     patterns = [
         rf"【{section_name}】\s*(.*?)(?=【|$)",
@@ -443,7 +1105,9 @@ def extract_section(text: str, section_name: str) -> Optional[str]:
 
 
 if __name__ == "__main__":
+    init_db()
     import socket
+    start_notification_scheduler()
 
     host = os.getenv("FLASK_HOST", "0.0.0.0")
     default_port = int(os.getenv("FLASK_PORT", "5001"))
