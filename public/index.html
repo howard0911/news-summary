@@ -177,6 +177,7 @@
         background: var(--bg);
         color: var(--text);
         line-height: 1.6;
+        font-size: 16px;
         min-height: 100vh;
         font-weight: 400;
         -webkit-font-smoothing: antialiased;
@@ -216,6 +217,7 @@
         transition: all 0.2s ease;
         font-size: 0.85rem;
         width: auto;
+        position: relative;
       }
 
       .account-btn:hover {
@@ -233,6 +235,39 @@
         color: white;
         font-size: 0.8rem;
         font-weight: 700;
+      }
+
+      .notif-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+
+      .menu-badge {
+        margin-left: auto;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
       }
 
       .account-menu-wrapper {
@@ -309,6 +344,9 @@
         font-size: 0.95rem;
         cursor: pointer;
         transition: background 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
       .account-menu-item:hover {
@@ -536,6 +574,28 @@
         width: auto;
         padding: 0.65rem 1.2rem;
         font-size: 0.85rem;
+      }
+
+      .auth-link {
+        background: none;
+        border: none;
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .auth-reset {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .auth-reset.is-open {
+        display: flex;
       }
 
       .pref-status {
@@ -847,19 +907,23 @@
         <button class="account-btn" id="accountBtn" type="button">
           <span class="account-avatar" id="accountAvatarBtn">U</span>
           <span id="accountBtnLabel" data-i18n="nav-login">Log in</span>
+          <span class="notif-badge" id="notificationBadge">0</span>
         </button>
         <div class="account-menu" id="accountMenu" hidden>
-          <div class="account-menu-header">
+          <div class="account-menu-header" id="menuHeader" hidden>
             <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
             <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
           </div>
           <div>
             <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
-            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">Notifications</button>
-            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
-            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications" hidden>
+              Notifications
+              <span class="menu-badge" id="menuNotificationBadge">0</span>
+            </button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences" hidden>Saved Preferences</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings" hidden>Settings</button>
             <button class="account-menu-item" id="menuLogin" type="button" data-i18n="menu-login">Log in</button>
-            <div class="account-menu-controls">
+            <div class="account-menu-controls" id="menuControls" hidden>
               <div class="lang-toggle">
                 <button class="lang-btn active" data-lang="en">English</button>
                 <button class="lang-btn" data-lang="zh">中文</button>
@@ -867,8 +931,8 @@
               <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
             </div>
           </div>
-          <div class="account-menu-footer">
-            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="auth-logout">Log out</button>
+          <div class="account-menu-footer" id="menuFooter" hidden>
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="auth-logout" hidden>Log out</button>
           </div>
         </div>
       </div>
@@ -895,6 +959,26 @@
           <div class="auth-actions">
             <button type="button" data-auth-action="login" data-i18n="auth-login">Log in</button>
             <button type="button" class="btn-outline" data-auth-action="signup" data-i18n="auth-signup">Sign up</button>
+            <button type="button" class="auth-link" id="forgotPasswordBtn" data-i18n="auth-forgot">Forgot password?</button>
+          </div>
+          <div class="auth-reset" id="resetPanel" hidden>
+            <div>
+              <label for="resetToken" data-i18n="auth-reset-token">Reset token</label>
+              <input id="resetToken" name="resetToken" type="text" data-i18n-placeholder="auth-reset-token-placeholder" placeholder="Paste reset token" />
+            </div>
+            <div>
+              <label for="resetPassword" data-i18n="auth-reset-password">New password</label>
+              <input id="resetPassword" name="resetPassword" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" />
+            </div>
+            <div>
+              <label for="resetPasswordConfirm" data-i18n="auth-reset-confirm">Confirm new password</label>
+              <input id="resetPasswordConfirm" name="resetPasswordConfirm" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" />
+            </div>
+            <div class="auth-actions">
+              <button type="button" id="requestResetBtn" data-i18n="auth-request-reset">Send reset link</button>
+              <button type="button" class="btn-outline" id="resetPasswordBtn" data-i18n="auth-reset-submit">Reset password</button>
+            </div>
+            <div class="auth-status" id="resetStatus"></div>
           </div>
         </form>
         <div class="auth-page-footer">
@@ -1023,6 +1107,20 @@
           "auth-signup": "註冊",
           "auth-logout": "登出",
           "auth-close": "返回",
+          "auth-forgot": "忘記密碼？",
+          "auth-reset-token": "重設代碼",
+          "auth-reset-token-placeholder": "貼上重設代碼",
+          "auth-reset-password": "新密碼",
+          "auth-reset-confirm": "確認新密碼",
+          "auth-request-reset": "寄送重設連結",
+          "auth-reset-submit": "重設密碼",
+          "auth-reset-email-required": "請輸入 Email 以重設密碼。",
+          "auth-reset-token-required": "請輸入重設代碼。",
+          "auth-reset-mismatch": "密碼不一致。",
+          "auth-reset-success": "密碼已更新，請重新登入。",
+          "auth-reset-invalid": "重設代碼無效或已過期。",
+          "auth-reset-requested": "如果信箱存在，已寄出重設連結。",
+          "auth-reset-sent": "已產生重設連結。（測試代碼：{token}）",
           "auth-status-signed-out": "尚未登入。",
           "auth-status-signed-in": "已登入：{email}",
           "auth-status-error": "登入失敗，請檢查帳號密碼。",
@@ -1099,6 +1197,20 @@
           "auth-signup": "Sign up",
           "auth-logout": "Log out",
           "auth-close": "Back",
+          "auth-forgot": "Forgot password?",
+          "auth-reset-token": "Reset token",
+          "auth-reset-token-placeholder": "Paste reset token",
+          "auth-reset-password": "New password",
+          "auth-reset-confirm": "Confirm new password",
+          "auth-request-reset": "Send reset link",
+          "auth-reset-submit": "Reset password",
+          "auth-reset-email-required": "Email required for reset.",
+          "auth-reset-token-required": "Reset token required.",
+          "auth-reset-mismatch": "Passwords do not match.",
+          "auth-reset-success": "Password updated. Please log in.",
+          "auth-reset-invalid": "Reset token is invalid or expired.",
+          "auth-reset-requested": "If the email exists, a reset link has been sent.",
+          "auth-reset-sent": "Reset link generated. (Dev token: {token})",
           "auth-status-signed-out": "Not signed in.",
           "auth-status-signed-in": "Signed in as {email}",
           "auth-status-error": "Sign-in failed. Check your credentials.",
@@ -1164,6 +1276,9 @@
         currentLang = lang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
+          if (currentUser && key === 'nav-login') {
+            return;
+          }
           if (translations[lang][key]) {
             el.textContent = translations[lang][key];
           }
@@ -1178,6 +1293,9 @@
           btn.classList.toggle('active', btn.dataset.lang === lang);
         });
         renderAuthState();
+        if (currentUser && menuLogin) {
+          menuLogin.hidden = true;
+        }
         try {
           window.localStorage.setItem(LANG_KEY, lang);
         } catch (e) {
@@ -1189,6 +1307,14 @@
       const authForm = document.getElementById('authForm');
       const authEmailInput = document.getElementById('authEmail');
       const authPasswordInput = document.getElementById('authPassword');
+      const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+      const resetPanel = document.getElementById('resetPanel');
+      const requestResetBtn = document.getElementById('requestResetBtn');
+      const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+      const resetTokenInput = document.getElementById('resetToken');
+      const resetPasswordInput = document.getElementById('resetPassword');
+      const resetPasswordConfirmInput = document.getElementById('resetPasswordConfirm');
+      const resetStatus = document.getElementById('resetStatus');
       const logoutBtn = document.getElementById('logoutBtn');
       const savePreferencesBtn = document.getElementById('savePreferences');
       const prefStatus = document.getElementById('prefStatus');
@@ -1197,6 +1323,8 @@
       const accountBtn = document.getElementById('accountBtn');
       const accountBtnLabel = document.getElementById('accountBtnLabel');
       const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const menuNotificationBadge = document.getElementById('menuNotificationBadge');
       const accountMenu = document.getElementById('accountMenu');
       const menuHome = document.getElementById('menuHome');
       const menuLogin = document.getElementById('menuLogin');
@@ -1207,6 +1335,9 @@
       const menuLogout = document.getElementById('menuLogout');
       const menuUsername = document.getElementById('menuUsername');
       const menuEmail = document.getElementById('menuEmail');
+      const menuHeader = document.getElementById('menuHeader');
+      const menuControls = document.getElementById('menuControls');
+      const menuFooter = document.getElementById('menuFooter');
       const authPage = document.getElementById('authPage');
       const authCloseBtn = document.getElementById('authCloseBtn');
       const mainContent = document.getElementById('mainContent');
@@ -1242,6 +1373,10 @@
       function showAuthPage() {
         if (authPage) authPage.style.display = 'flex';
         if (mainContent) mainContent.style.display = 'none';
+        if (resetPanel) {
+          resetPanel.classList.remove('is-open');
+          resetPanel.hidden = true;
+        }
         isAuthOpen = true;
       }
 
@@ -1271,6 +1406,15 @@
         return translations[currentLang]['auth-status-error'];
       }
 
+      function getResetErrorMessage(errorCode) {
+        if (!errorCode) return translations[currentLang]['auth-reset-invalid'];
+        if (errorCode === 'email_required') return translations[currentLang]['auth-reset-email-required'];
+        if (errorCode === 'token_and_password_required') return translations[currentLang]['auth-reset-token-required'];
+        if (errorCode === 'password_too_short') return translations[currentLang]['auth-error-password-short'];
+        if (errorCode === 'invalid_or_expired') return translations[currentLang]['auth-reset-invalid'];
+        return translations[currentLang]['auth-reset-invalid'];
+      }
+
       function renderAuthState() {
         if (!authStatus) return;
         if (currentUser) {
@@ -1286,15 +1430,14 @@
           if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-idle'];
           const displayName = currentUser.username || getDisplayName(currentUser.email);
           if (accountBtnLabel) accountBtnLabel.textContent = displayName;
+          if (accountBtnLabel) accountBtnLabel.removeAttribute('data-i18n');
           if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
           if (menuUsername) menuUsername.textContent = displayName;
           if (menuEmail) menuEmail.textContent = currentUser.email || '';
           // username chip removed
           if (menuLogin) menuLogin.hidden = true;
-          if (menuAccountSettings) menuAccountSettings.hidden = false;
-          if (menuSavedPreferences) menuSavedPreferences.hidden = false;
-          if (menuNotifications) menuNotifications.hidden = false;
-          if (menuLogout) menuLogout.hidden = false;
+          setMenuAuthState(true);
+          loadNotificationBadge();
           hideAuthPage();
         } else {
           authStatus.textContent = translations[currentLang]['auth-status-signed-out'];
@@ -1308,15 +1451,14 @@
           }
           if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-login-required'];
           if (accountBtnLabel) accountBtnLabel.textContent = translations[currentLang]['nav-login'];
+          if (accountBtnLabel) accountBtnLabel.setAttribute('data-i18n', 'nav-login');
           if (accountAvatarBtn) accountAvatarBtn.textContent = 'U';
           if (menuUsername) menuUsername.textContent = translations[currentLang]['menu-guest-title'];
           if (menuEmail) menuEmail.textContent = translations[currentLang]['menu-guest-subtitle'];
           // username chip removed
           if (menuLogin) menuLogin.hidden = false;
-          if (menuAccountSettings) menuAccountSettings.hidden = true;
-          if (menuSavedPreferences) menuSavedPreferences.hidden = true;
-          if (menuNotifications) menuNotifications.hidden = true;
-          if (menuLogout) menuLogout.hidden = true;
+          setMenuAuthState(false);
+          updateNotificationBadge(0);
           if (isAuthOpen) {
             showAuthPage();
           } else {
@@ -1329,6 +1471,7 @@
         const token = getAuthToken();
         if (!token) {
           currentUser = null;
+          setMenuAuthState(false);
           renderAuthState();
           return;
         }
@@ -1341,15 +1484,81 @@
           if (!resp.ok) {
             setAuthToken(null);
             currentUser = null;
+            setMenuAuthState(false);
             renderAuthState();
             return;
           }
           const data = await resp.json();
           currentUser = data.user || null;
           renderAuthState();
+          if (currentUser && menuLogin) menuLogin.hidden = true;
           await loadPreferences();
         } catch (e) {
           console.error('loadCurrentUser error', e);
+        }
+      }
+
+      function setMenuAuthState(isAuthed) {
+        const authedItems = [
+          menuHeader,
+          menuNotifications,
+          menuSavedPreferences,
+          menuAccountSettings,
+          menuControls,
+          menuFooter,
+          menuLogout
+        ];
+        authedItems.forEach((el) => {
+          if (!el) return;
+          el.hidden = !isAuthed;
+          el.style.display = isAuthed ? '' : 'none';
+        });
+        if (menuLogin) {
+          menuLogin.hidden = isAuthed;
+          menuLogin.style.display = isAuthed ? 'none' : '';
+        }
+      }
+
+      async function loadNotificationBadge() {
+        const token = getAuthToken();
+        if (!token) {
+          updateNotificationBadge(0);
+          return;
+        }
+        try {
+          const resp = await fetch('/api/notifications', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) {
+            updateNotificationBadge(0);
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          const unread = items.filter(item => !item.read_at).length;
+          updateNotificationBadge(unread);
+        } catch (e) {
+          console.error('loadNotificationBadge error', e);
+          updateNotificationBadge(0);
+        }
+      }
+
+      function updateNotificationBadge(count) {
+        if (!notificationBadge) return;
+        if (count > 0) {
+          notificationBadge.textContent = count > 99 ? '99+' : String(count);
+          notificationBadge.style.display = 'inline-flex';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.textContent = count > 99 ? '99+' : String(count);
+            menuNotificationBadge.style.display = 'inline-flex';
+          }
+        } else {
+          notificationBadge.style.display = 'none';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.style.display = 'none';
+          }
         }
       }
 
@@ -1407,18 +1616,6 @@
             body: JSON.stringify(payload)
           });
           if (!resp.ok) {
-            if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
-            return;
-          }
-          const savedResp = await fetch('/api/saved-preferences', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-          });
-          if (!savedResp.ok) {
             if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
             return;
           }
@@ -1484,6 +1681,89 @@
           } catch (e) {
             console.error('auth error', e);
             authStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', () => {
+          if (!resetPanel) return;
+          const isOpen = resetPanel.classList.contains('is-open');
+          resetPanel.classList.toggle('is-open', !isOpen);
+          resetPanel.hidden = isOpen;
+          if (resetStatus) resetStatus.textContent = '';
+        });
+      }
+
+      if (requestResetBtn) {
+        requestResetBtn.addEventListener('click', async () => {
+          const email = authEmailInput?.value?.trim() || '';
+          if (!email) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-email-required'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/request-reset', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (resetStatus) resetStatus.textContent = getResetErrorMessage(data.error);
+              return;
+            }
+            if (resetTokenInput && data.token) {
+              resetTokenInput.value = data.token;
+            }
+            if (resetPanel) resetPanel.hidden = false;
+            if (resetStatus) {
+              const message = data.token
+                ? translations[currentLang]['auth-reset-sent'].replace('{token}', data.token)
+                : translations[currentLang]['auth-reset-requested'];
+              resetStatus.textContent = message;
+            }
+          } catch (e) {
+            console.error('request reset error', e);
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', async () => {
+          const token = resetTokenInput?.value?.trim() || '';
+          const newPassword = resetPasswordInput?.value || '';
+          const confirmPassword = resetPasswordConfirmInput?.value || '';
+          if (!token) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-token-required'];
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-mismatch'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/reset-password', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ token, new_password: newPassword })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (resetStatus) resetStatus.textContent = getResetErrorMessage(data.error);
+              return;
+            }
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-success'];
+            if (resetPasswordInput) resetPasswordInput.value = '';
+            if (resetPasswordConfirmInput) resetPasswordConfirmInput.value = '';
+          } catch (e) {
+            console.error('reset password error', e);
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-status-error'];
           }
         });
       }
@@ -1826,6 +2106,13 @@
     document.addEventListener('DOMContentLoaded', () => {
       try {
         initTheme();
+        if (resetPanel) {
+          resetPanel.classList.remove('is-open');
+          resetPanel.hidden = true;
+        }
+        if (resetStatus) {
+          resetStatus.textContent = '';
+        }
       } catch (e) {
         console.error('initTheme error', e);
       }

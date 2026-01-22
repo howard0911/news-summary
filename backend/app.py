@@ -6,7 +6,7 @@ import threading
 import time
 import secrets
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import quote_plus
@@ -34,6 +34,73 @@ def get_db() -> sqlite3.Connection:
     return conn
 
 
+def now_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
+def table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    row = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (name,),
+    ).fetchone()
+    return row is not None
+
+
+def get_table_columns(conn: sqlite3.Connection, name: str) -> List[str]:
+    rows = conn.execute(f"PRAGMA table_info({name})").fetchall()
+    return [row["name"] for row in rows]
+
+
+def ensure_preferences_table(conn: sqlite3.Connection) -> None:
+    legacy_pref = False
+    if table_exists(conn, "preferences"):
+        columns = get_table_columns(conn, "preferences")
+        legacy_pref = "id" not in columns
+    if legacy_pref:
+        conn.execute("ALTER TABLE preferences RENAME TO preferences_legacy")
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS preferences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            topic TEXT,
+            region TEXT,
+            lang TEXT,
+            sources TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
+    )
+
+    if table_exists(conn, "preferences_legacy"):
+        legacy_columns = get_table_columns(conn, "preferences_legacy")
+        created_field = "updated_at" if "updated_at" in legacy_columns else None
+        if created_field:
+            conn.execute(
+                """
+                INSERT INTO preferences (user_id, topic, region, lang, sources, created_at)
+                SELECT user_id, topic, region, lang, sources, updated_at
+                FROM preferences_legacy
+                """
+            )
+        conn.execute("DROP TABLE preferences_legacy")
+
+    if table_exists(conn, "saved_preferences"):
+        conn.execute("ALTER TABLE saved_preferences RENAME TO saved_preferences_legacy")
+
+    if table_exists(conn, "saved_preferences_legacy"):
+        conn.execute(
+            """
+            INSERT INTO preferences (user_id, topic, region, lang, sources, created_at)
+            SELECT user_id, topic, region, lang, sources, created_at
+            FROM saved_preferences_legacy
+            """
+        )
+        conn.execute("DROP TABLE saved_preferences_legacy")
+
+
 def init_db() -> None:
     schema = """
     CREATE TABLE IF NOT EXISTS users (
@@ -42,25 +109,6 @@ def init_db() -> None:
         username TEXT,
         password_hash TEXT NOT NULL,
         created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS preferences (
-        user_id INTEGER PRIMARY KEY,
-        topic TEXT,
-        region TEXT,
-        lang TEXT,
-        sources TEXT,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-    CREATE TABLE IF NOT EXISTS saved_preferences (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        topic TEXT,
-        region TEXT,
-        lang TEXT,
-        sources TEXT,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS notification_settings (
         user_id INTEGER PRIMARY KEY,
@@ -77,6 +125,15 @@ def init_db() -> None:
         body TEXT NOT NULL,
         created_at TEXT NOT NULL,
         read_at TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS password_resets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used_at TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS digests (
@@ -96,6 +153,7 @@ def init_db() -> None:
             conn.execute("ALTER TABLE users ADD COLUMN username TEXT")
         except sqlite3.OperationalError:
             pass
+        ensure_preferences_table(conn)
         conn.commit()
     finally:
         conn.close()
@@ -104,10 +162,6 @@ def init_db() -> None:
 serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 init_db()
-
-
-def now_iso() -> str:
-    return datetime.utcnow().isoformat()
 
 
 def generate_token(user_id: int) -> str:
@@ -450,6 +504,84 @@ def login():
     return jsonify({"token": token, "user": {"id": row["id"], "email": row["email"], "username": row["username"]}})
 
 
+@app.post("/api/auth/request-reset")
+def request_password_reset():
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"error": "email_required"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if row:
+            user_id = row["id"]
+            now = now_iso()
+            expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+            conn.execute(
+                "UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL",
+                (now, user_id),
+            )
+            token = secrets.token_urlsafe(32)
+            conn.execute(
+                """
+                INSERT INTO password_resets (user_id, token, created_at, expires_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (user_id, token, now, expires_at),
+            )
+            conn.commit()
+            return jsonify({"status": "ok", "token": token, "expires_at": expires_at})
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
+@app.post("/api/auth/reset-password")
+def reset_password():
+    payload = request.get_json(silent=True) or {}
+    token = (payload.get("token") or "").strip()
+    new_password = payload.get("new_password") or ""
+    if not token or not new_password:
+        return jsonify({"error": "token_and_password_required"}), 400
+    if len(new_password) < 8:
+        return jsonify({"error": "password_too_short"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            """
+            SELECT id, user_id, expires_at
+            FROM password_resets
+            WHERE token = ? AND used_at IS NULL
+            """,
+            (token,),
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "invalid_or_expired"}), 400
+        expires_at = row["expires_at"]
+        try:
+            if datetime.utcnow() > datetime.fromisoformat(expires_at):
+                return jsonify({"error": "invalid_or_expired"}), 400
+        except ValueError:
+            return jsonify({"error": "invalid_or_expired"}), 400
+
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (generate_password_hash(new_password), row["user_id"]),
+        )
+        conn.execute(
+            "UPDATE password_resets SET used_at = ? WHERE id = ?",
+            (now_iso(), row["id"]),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"status": "ok"})
+
+
 @app.get("/api/me")
 def me():
     user_id = require_auth()
@@ -679,7 +811,13 @@ def get_preferences():
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT topic, region, lang, sources, updated_at FROM preferences WHERE user_id = ?",
+            """
+            SELECT topic, region, lang, sources, created_at
+            FROM preferences
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
             (user_id,),
         ).fetchone()
     finally:
@@ -693,7 +831,7 @@ def get_preferences():
                 "region": row["region"],
                 "lang": row["lang"],
                 "sources": json.loads(row["sources"]) if row["sources"] else None,
-                "updated_at": row["updated_at"],
+                "updated_at": row["created_at"],
             }
         }
     )
@@ -711,28 +849,22 @@ def update_preferences():
     lang = (payload.get("lang") or "").strip().lower() or None
     sources = payload.get("sources")
     sources_json = json.dumps(sources) if sources is not None else None
-    updated_at = now_iso()
+    created_at = now_iso()
 
     conn = get_db()
     try:
         conn.execute(
             """
-            INSERT INTO preferences (user_id, topic, region, lang, sources, updated_at)
+            INSERT INTO preferences (user_id, topic, region, lang, sources, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                topic=excluded.topic,
-                region=excluded.region,
-                lang=excluded.lang,
-                sources=excluded.sources,
-                updated_at=excluded.updated_at
             """,
-            (user_id, topic, region, lang, sources_json, updated_at),
+            (user_id, topic, region, lang, sources_json, created_at),
         )
         conn.commit()
     finally:
         conn.close()
 
-    return jsonify({"status": "ok", "updated_at": updated_at})
+    return jsonify({"status": "ok", "updated_at": created_at})
 
 
 @app.get("/api/saved-preferences")
@@ -746,7 +878,7 @@ def list_saved_preferences():
         rows = conn.execute(
             """
             SELECT id, topic, region, lang, sources, created_at
-            FROM saved_preferences
+            FROM preferences
             WHERE user_id = ?
             ORDER BY created_at DESC
             """,
@@ -787,7 +919,13 @@ def save_preferences():
         conn = get_db()
         try:
             row = conn.execute(
-                "SELECT topic, region, lang, sources FROM preferences WHERE user_id = ?",
+                """
+                SELECT topic, region, lang, sources
+                FROM preferences
+                WHERE user_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
                 (user_id,),
             ).fetchone()
         finally:
@@ -798,12 +936,15 @@ def save_preferences():
             lang = lang or row["lang"]
             sources_json = sources_json or row["sources"]
 
+    if not any([topic, region, lang, sources_json]):
+        return jsonify({"error": "no_preferences"}), 400
+
     created_at = now_iso()
     conn = get_db()
     try:
         conn.execute(
             """
-            INSERT INTO saved_preferences (user_id, topic, region, lang, sources, created_at)
+            INSERT INTO preferences (user_id, topic, region, lang, sources, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (user_id, topic, region, lang, sources_json, created_at),
@@ -824,7 +965,7 @@ def delete_saved_preference(pref_id: int):
     conn = get_db()
     try:
         cur = conn.execute(
-            "DELETE FROM saved_preferences WHERE id = ? AND user_id = ?",
+            "DELETE FROM preferences WHERE id = ? AND user_id = ?",
             (pref_id, user_id),
         )
         conn.commit()
@@ -872,8 +1013,7 @@ def get_news():
     entries = fetch_feed_entries(feed_url)
 
     if not entries:
-        error_msg = "無法取得新聞，請稍後再試" if lang.startswith("zh") else "Failed to fetch news, please try again later"
-        return jsonify({"items": [], "error": error_msg}), 502
+        return jsonify({"items": [], "takeaway": None, "source": feed_url})
 
     news_items = [serialize_entry(e) for e in entries[:MAX_NEWS_COUNT]]
 
@@ -899,9 +1039,9 @@ def build_google_news_feed(topic: str, region: Dict[str, str]) -> str:
 
 def fetch_feed_entries(feed_url: str) -> List[feedparser.FeedParserDict]:
     parsed = feedparser.parse(feed_url)
-    if parsed.bozo:
+    entries = parsed.entries or []
+    if parsed.bozo and not entries:
         return []
-    entries = parsed.entries
     # sort by published time (most recent first)
     entries.sort(key=lambda x: (x.get("published_parsed") or (1970, 1, 1, 0, 0, 0, 0, 0, 0)), reverse=True)
     return entries
@@ -987,7 +1127,13 @@ def build_user_digest_payload(user_id: int) -> Optional[Dict]:
     conn = get_db()
     try:
         pref = conn.execute(
-            "SELECT topic, region, lang, sources FROM preferences WHERE user_id = ?",
+            """
+            SELECT topic, region, lang, sources
+            FROM preferences
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
             (user_id,),
         ).fetchone()
     finally:
@@ -1107,11 +1253,13 @@ def extract_section(text: str, section_name: str) -> Optional[str]:
 if __name__ == "__main__":
     init_db()
     import socket
-    start_notification_scheduler()
 
     host = os.getenv("FLASK_HOST", "0.0.0.0")
     default_port = int(os.getenv("FLASK_PORT", "5001"))
     debug = os.getenv("FLASK_DEBUG", "True").lower() == "true"
+    should_start_scheduler = (not debug) or os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    if should_start_scheduler:
+        start_notification_scheduler()
 
     def find_free_port(start_port):
         port = start_port

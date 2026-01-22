@@ -52,6 +52,7 @@
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         background: var(--bg);
         color: var(--text);
+        font-size: 16px;
         min-height: 100vh;
       }
 
@@ -77,6 +78,7 @@
         color: var(--text);
         cursor: pointer;
         font-size: 0.85rem;
+        position: relative;
       }
 
       body.dark .account-btn {
@@ -95,6 +97,39 @@
         color: white;
         font-size: 0.8rem;
         font-weight: 700;
+      }
+
+      .notif-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+
+      .menu-badge {
+        margin-left: auto;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
       }
 
       .account-menu-wrapper {
@@ -157,6 +192,9 @@
         font-weight: 600;
         font-size: 0.95rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
       .account-menu-item:hover {
@@ -269,6 +307,16 @@
         border-bottom: 1px solid var(--border-light);
       }
 
+      .notification-item.unread {
+        background: rgba(59, 130, 246, 0.08);
+        border-radius: 12px;
+        padding: 0.85rem;
+      }
+
+      body.dark .notification-item.unread {
+        background: rgba(59, 130, 246, 0.14);
+      }
+
       .notification-item:last-child {
         border-bottom: none;
       }
@@ -296,6 +344,12 @@
         font-weight: 600;
       }
 
+      .btn-small.is-disabled,
+      .btn-small:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
       .status {
         margin-top: 0.75rem;
         color: var(--text-secondary);
@@ -309,6 +363,7 @@
         <button class="account-btn" id="accountBtn" type="button">
           <span class="account-avatar" id="accountAvatarBtn">U</span>
           <span id="accountBtnLabel" data-i18n="nav-account">Account</span>
+          <span class="notif-badge" id="notificationBadge">0</span>
         </button>
         <div class="account-menu" id="accountMenu" hidden>
           <div class="account-menu-header">
@@ -317,9 +372,12 @@
           </div>
           <div>
             <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
-            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">Notifications</button>
-            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">
+              Notifications
+              <span class="menu-badge" id="menuNotificationBadge">0</span>
+            </button>
             <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
             <div class="account-menu-controls">
               <div class="lang-toggle">
                 <button class="lang-btn active" data-lang="en" data-i18n="lang-english">English</button>
@@ -396,6 +454,8 @@
       const accountBtn = document.getElementById('accountBtn');
       const accountBtnLabel = document.getElementById('accountBtnLabel');
       const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const menuNotificationBadge = document.getElementById('menuNotificationBadge');
       const accountMenu = document.getElementById('accountMenu');
       const menuHome = document.getElementById('menuHome');
       const menuAccountSettings = document.getElementById('menuAccountSettings');
@@ -473,8 +533,50 @@
           if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
           if (menuUsername) menuUsername.textContent = displayName || 'Guest';
           if (menuEmail) menuEmail.textContent = user.email || '';
+          loadNotificationBadge();
         } catch (e) {
           console.error('loadCurrentUser error', e);
+        }
+      }
+
+      async function loadNotificationBadge() {
+        const token = getAuthToken();
+        if (!token) {
+          updateNotificationBadge(0);
+          return;
+        }
+        try {
+          const resp = await fetch('/api/notifications', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            updateNotificationBadge(0);
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          const unread = items.filter(item => !item.read_at).length;
+          updateNotificationBadge(unread);
+        } catch (e) {
+          console.error('loadNotificationBadge error', e);
+          updateNotificationBadge(0);
+        }
+      }
+
+      function updateNotificationBadge(count) {
+        if (!notificationBadge) return;
+        if (count > 0) {
+          notificationBadge.textContent = count > 99 ? '99+' : String(count);
+          notificationBadge.style.display = 'inline-flex';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.textContent = count > 99 ? '99+' : String(count);
+            menuNotificationBadge.style.display = 'inline-flex';
+          }
+        } else {
+          notificationBadge.style.display = 'none';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.style.display = 'none';
+          }
         }
       }
 
@@ -505,17 +607,26 @@
         notificationList.innerHTML = '';
         if (!notificationsCache.length) {
           if (notificationStatus) notificationStatus.textContent = translations[currentLang]['notifications-empty'];
+          updateNotificationBadge(0);
           return;
         }
         if (notificationStatus) notificationStatus.textContent = '';
+        const unreadCount = notificationsCache.filter(item => !item.read_at).length;
+        updateNotificationBadge(unreadCount);
         notificationList.innerHTML = notificationsCache
           .map(item => {
             const created = item.created_at || '';
             const status = item.read_at
               ? translations[currentLang]['notifications-read']
               : translations[currentLang]['notifications-unread'];
+            const readLabel = item.read_at
+              ? translations[currentLang]['notifications-read']
+              : translations[currentLang]['notifications-mark-read'];
+            const readDisabled = item.read_at ? 'disabled' : '';
+            const readClass = item.read_at ? 'btn-small is-disabled' : 'btn-small';
+            const rowClass = item.read_at ? 'notification-item' : 'notification-item unread';
             return `
-              <div class="notification-item">
+              <div class="${rowClass}">
                 <strong>${item.title}</strong>
                 <div>${item.body}</div>
                 <div class="notification-meta">
@@ -523,7 +634,7 @@
                   <span>${status}</span>
                 </div>
                 <div class="notification-actions">
-                  <button class="btn-small" data-action="read" data-id="${item.id}">${translations[currentLang]['notifications-mark-read']}</button>
+                  <button class="${readClass}" data-action="read" data-id="${item.id}" ${readDisabled}>${readLabel}</button>
                   <button class="btn-small" data-action="delete" data-id="${item.id}">${translations[currentLang]['notifications-delete']}</button>
                 </div>
               </div>
@@ -577,6 +688,7 @@
         notificationList.addEventListener('click', async (event) => {
           const target = event.target;
           if (!(target instanceof HTMLElement)) return;
+          if (target instanceof HTMLButtonElement && target.disabled) return;
           const action = target.getAttribute('data-action');
           const id = target.getAttribute('data-id');
           if (!action || !id) return;
