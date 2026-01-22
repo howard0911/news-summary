@@ -923,7 +923,7 @@
             <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences" hidden>Saved Preferences</button>
             <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings" hidden>Settings</button>
             <button class="account-menu-item" id="menuLogin" type="button" data-i18n="menu-login">Log in</button>
-            <div class="account-menu-controls" id="menuControls" hidden>
+            <div class="account-menu-controls" id="menuControls">
               <div class="lang-toggle">
                 <button class="lang-btn active" data-lang="en">English</button>
                 <button class="lang-btn" data-lang="zh">中文</button>
@@ -1060,7 +1060,6 @@
           </div>
           <div class="pref-status" id="prefStatus" data-i18n="pref-status-idle">Save your preferences after you sign in.</div>
         </form>
-        <p class="status" id="helper" data-i18n="helper-text">Fetching latest news from the past 24 hours...</p>
       </section>
 
       <div id="aiDisabledNotice" class="ai-disabled" style="display: none;" data-i18n="ai-disabled">
@@ -1504,7 +1503,6 @@
           menuNotifications,
           menuSavedPreferences,
           menuAccountSettings,
-          menuControls,
           menuFooter,
           menuLogout
         ];
@@ -1513,6 +1511,10 @@
           el.hidden = !isAuthed;
           el.style.display = isAuthed ? '' : 'none';
         });
+        if (menuControls) {
+          menuControls.hidden = false;
+          menuControls.style.display = '';
+        }
         if (menuLogin) {
           menuLogin.hidden = isAuthed;
           menuLogin.style.display = isAuthed ? 'none' : '';
