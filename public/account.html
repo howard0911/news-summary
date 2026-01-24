@@ -80,6 +80,7 @@
       body.dark .lang-toggle {
         background: #020617;
         border-color: #1f2937;
+        box-shadow: 0 10px 35px rgba(15, 23, 42, 0.9);
       }
 
       .lang-btn {
@@ -92,11 +93,20 @@
         font-weight: 500;
         font-size: 0.8rem;
         transition: all 0.2s;
+        width: auto;
       }
 
       .lang-btn.active {
         background: var(--primary);
         color: white;
+      }
+
+      .lang-btn:hover:not(.active) {
+        background: var(--bg-secondary);
+      }
+
+      body.dark .lang-btn {
+        color: #9ca3af;
       }
 
       body.dark .lang-btn.active {
@@ -115,6 +125,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.18s ease;
+        font-weight: 600;
+      }
+
+      .theme-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
       }
 
       .account-btn {
@@ -130,6 +147,12 @@
         cursor: pointer;
         font-size: 0.85rem;
         position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .account-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
       }
 
       body.dark .account-btn {
@@ -226,6 +249,7 @@
         color: rgba(15, 23, 42, 0.6);
         font-size: 0.85rem;
         word-break: break-all;
+        font-weight: 400;
       }
 
       body.dark .account-menu-email {
@@ -246,6 +270,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        transition: background 0.2s ease;
       }
 
       .account-menu-item:hover {
@@ -460,6 +485,19 @@
         color: var(--text-secondary);
       }
 
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.75rem;
+      }
+
+      .checkbox-row input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+      }
+
       input {
         width: 100%;
         padding: 0.75rem 1rem;
@@ -615,9 +653,9 @@
                       <label for="digestTime" data-i18n="notification-digest-time">Daily digest time</label>
                       <input id="digestTime" name="digestTime" type="time" required />
                     </div>
-                    <div>
+                    <div class="checkbox-row">
+                      <input id="digestEnabled" name="digestEnabled" type="checkbox" />
                       <label for="digestEnabled">
-                        <input id="digestEnabled" name="digestEnabled" type="checkbox" />
                         <span data-i18n="notification-enable">Enable daily digest</span>
                       </label>
                     </div>
