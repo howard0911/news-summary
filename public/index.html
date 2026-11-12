@@ -459,7 +459,7 @@
                 id="address"
                 name="address"
                 data-i18n-placeholder="address-placeholder"
-                placeholder="Chicago, USA"
+                placeholder="City or country, e.g. Chicago"
                 required
               />
             </div>
@@ -600,7 +600,7 @@
           "topic-label": "主題",
           "topic-placeholder": "科技",
           "address-label": "地點",
-          "address-placeholder": "台北，台灣",
+          "address-placeholder": "城市或國家，例如台北",
           "address-helper": "請輸入位置或點擊自動偵測",
           "detect-location": "偵測我的位置",
           "source-label": "新聞來源",
@@ -620,6 +620,7 @@
           "things-to-watch": "今天需要注意的事情",
           "takeaway": "Take Away",
           "error-fetch": "無法取得新聞",
+          "error-unsupported-location": "不支援這個地點",
           "ai-disabled": "AI 摘要功能目前不可用。新聞文章將在沒有 AI 生成摘要的情況下顯示。"
         },
         en: {
@@ -692,7 +693,7 @@
           "topic-label": "Topic",
           "topic-placeholder": "Technology",
           "address-label": "Location",
-          "address-placeholder": "Chicago, USA",
+          "address-placeholder": "City or country, e.g. Chicago",
           "address-helper": "Enter your location or click to detect automatically",
           "detect-location": "Detect my location",
           "source-label": "Source",
@@ -712,6 +713,7 @@
           "things-to-watch": "Things to Watch Today",
           "takeaway": "Take Away",
           "error-fetch": "Failed to fetch news",
+          "error-unsupported-location": "This location is not supported",
           "ai-disabled": "AI summarization is currently unavailable. News articles are displayed without AI-generated summaries."
         }
       };
@@ -1488,6 +1490,9 @@
           const payload = await response.json();
 
           if (!response.ok) {
+            if (payload.code === "unsupported_location") {
+              throw new Error(translations[currentLang]["error-unsupported-location"]);
+            }
             throw new Error(payload.error || translations[currentLang]["error-fetch"]);
           }
 

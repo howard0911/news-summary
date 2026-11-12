@@ -9,7 +9,8 @@ import requests
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from functools import lru_cache
+from typing import Dict, List, NamedTuple, Optional
 from urllib.parse import quote_plus
 
 import feedparser
@@ -502,21 +503,54 @@ class UnknownSourceError(ValueError):
     """The source id is not one of the home page presets."""
 
 
-def resolve_region_key(location: str) -> str:
-    """Map free-form location text such as "Chicago, IL, USA" or "台北，台灣" to a REGION_CONFIG key.
+class LocationLookupError(RuntimeError):
+    """The LLM could not be reached or returned an unreadable answer while resolving a location."""
 
-    Comma-separated parts are checked from last to first, so the country usually wins over the city.
+
+class ResolvedLocation(NamedTuple):
+    region_key: str
+    # City or area to add to the news search, written in the region's news language; "" for a whole country
+    place: str
+
+
+@lru_cache(maxsize=512)
+def resolve_location(location: str) -> ResolvedLocation:
+    """Turn rough location text such as "台北", "bay area" or "Chicago, USA" into a supported region plus a place.
+
+    A bare country name is matched from the static table; anything else is resolved by the LLM.
     """
+    text = location.strip().lower()
     lookup: Dict[str, str] = {**REGION_ALIASES}
     for key, config in REGION_CONFIG.items():
         lookup[key] = key
         lookup[config["name"].lower()] = key
-    parts = [part.strip().lower() for part in re.split(r"[,，、]", location) if part.strip()]
-    for part in reversed(parts):
-        if part in lookup:
-            return lookup[part]
+    if text in lookup:
+        return ResolvedLocation(region_key=lookup[text], place="")
+
     supported = ", ".join(config["name"] for config in REGION_CONFIG.values())
-    raise UnknownRegionError(f"Unknown location {location!r}. Add a supported country, e.g. 'Chicago, USA'. Supported: {supported}")
+    if not text:
+        raise UnknownRegionError(f"Location is empty. Enter a city or country. Supported countries: {supported}")
+
+    codes = "\n".join(f"{key}: {config['name']} (news language {config['hl']})" for key, config in REGION_CONFIG.items())
+    prompt = f"""Identify where this location text refers to: "{location.strip()}"
+
+Supported country codes:
+{codes}
+
+Reply with JSON only, no other text:
+{{"country": "<one code from the list, or null if the place is not in any listed country>", "place": "<the city or area name written in that country's news language, or an empty string if the text names only a country>"}}"""
+    out = ask_llm([{"role": "user", "content": prompt}], max_tokens=1000, temperature=0.0, timeout=30.0)
+    match = re.search(r"\{.*\}", out or "", re.DOTALL)
+    if not match:
+        raise LocationLookupError(f"Could not resolve location {location!r}: LLM returned {out!r}")
+    try:
+        answer = json.loads(match.group(0))
+    except json.JSONDecodeError as e:
+        raise LocationLookupError(f"Could not resolve location {location!r}: invalid JSON {out!r}") from e
+    country = str(answer.get("country") or "").strip().lower()
+    if country not in REGION_CONFIG:
+        raise UnknownRegionError(f"Location {location!r} is not in a supported country. Supported: {supported}")
+    return ResolvedLocation(region_key=country, place=str(answer.get("place") or "").strip())
 
 
 def resolve_source_site(source_id: str) -> Optional[str]:
@@ -1094,12 +1128,16 @@ def get_news():
     lang = request.args.get("lang", "en").lower()
 
     try:
-        region = REGION_CONFIG[resolve_region_key(location)]
+        resolved = resolve_location(location)
         site = resolve_source_site(source_id)
-    except (UnknownRegionError, UnknownSourceError) as e:
-        return jsonify({"error": str(e), "region": location, "presetId": source_id}), 400
+    except UnknownRegionError as e:
+        return jsonify({"error": str(e), "code": "unsupported_location", "region": location}), 400
+    except UnknownSourceError as e:
+        return jsonify({"error": str(e), "presetId": source_id}), 400
+    except LocationLookupError as e:
+        return jsonify({"error": str(e), "region": location}), 502
 
-    feed_url = custom_url or build_google_news_feed(topic, region, site)
+    feed_url = custom_url or build_google_news_feed(topic, resolved.place, REGION_CONFIG[resolved.region_key], site)
     entries = fetch_feed_entries(feed_url)
 
     if not entries:
@@ -1127,8 +1165,8 @@ def generate_bilingual_takeaways(news_items: List[Dict]) -> Dict[str, Optional[D
     return results
 
 
-def build_google_news_feed(topic: str, region: Dict[str, str], site: Optional[str]) -> str:
-    query = f"{topic} site:{site}" if site else topic
+def build_google_news_feed(topic: str, place: str, region: Dict[str, str], site: Optional[str]) -> str:
+    query = " ".join(part for part in (topic, place, f"site:{site}" if site else "") if part)
     return (
         "https://news.google.com/rss/search?q="
         f"{quote_plus(query)}+when:1d&hl={region['hl']}&gl={region['gl']}&ceid={region['ceid']}"
@@ -1250,9 +1288,9 @@ def build_user_digest_payload(user_id: int) -> Optional[Dict]:
         lang = pref["lang"] or lang
         sources = json.loads(pref["sources"]) if pref["sources"] else None
 
-    region = REGION_CONFIG[resolve_region_key(location)]
+    resolved = resolve_location(location)
     site = resolve_source_site(sources[0]) if sources else None
-    feed_url = build_google_news_feed(topic, region, site)
+    feed_url = build_google_news_feed(topic, resolved.place, REGION_CONFIG[resolved.region_key], site)
     entries = fetch_feed_entries(feed_url)
     if not entries:
         return None
