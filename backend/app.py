@@ -217,7 +217,7 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
 # Groq config (OpenAI-compatible API, recommended free tier)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 
 # Native OpenAI model name (if you decide to use real OpenAI)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
