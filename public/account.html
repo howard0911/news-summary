@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%226%22 fill=%22%23C2361C%22/></svg>" />
+    <link rel="stylesheet" href="digest.css" />
+    <style>
+      .account-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 48px;
+      }
+
+      .account-profile { display: flex; flex-direction: column; gap: 8px; }
+
+      .avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 2px;
+        border: 1px solid var(--rule-strong);
+        display: grid;
+        place-items: center;
+        font-size: 30px;
+        font-weight: 300;
+        letter-spacing: -0.04em;
+        margin-bottom: 8px;
+      }
+
+      .account-message {
+        color: var(--success);
+        font-family: var(--f-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .account-email { color: var(--ink-2); word-break: break-all; }
+
+      .account-panel { max-width: 640px; }
+
+      .account-accordion { border-top: 1px solid var(--rule-strong); }
+
+      .account-accordion-item { border-bottom: 1px solid var(--rule); }
+
+      .account-accordion-btn,
+      .account-subitem > button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        text-align: left;
+      }
+
+      .account-accordion-btn strong {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .account-accordion-btn span,
+      .account-subitem > button span:last-child {
+        font-family: var(--f-mono);
+        color: var(--accent);
+      }
+
+      .account-accordion-content { display: none; padding-bottom: 24px; }
+
+      .account-accordion-item.active .account-accordion-content { display: block; }
+
+      .account-sublist { border-top: 1px solid var(--rule); }
+
+      .account-subitem { border-bottom: 1px solid var(--rule); }
+
+      .account-subitem > button { padding: 12px 0; font-weight: 500; }
+
+      .account-subitem-content { display: none; padding-bottom: 24px; }
+
+      .account-subitem.active .account-subitem-content { display: block; }
+
+      .account-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+
+      .account-status {
+        margin-top: 12px;
+        color: var(--ink-2);
+        font-family: var(--f-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+      .checkbox-row label { margin: 0; color: var(--ink); font-family: var(--f-sans); font-size: 16px; letter-spacing: 0; text-transform: none; }
+
+      @media (max-width: 768px) {
+        .account-layout { grid-template-columns: 1fr; gap: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-actions">
+      <div class="account-menu-wrapper">
+        <button class="account-btn" id="accountBtn" type="button">
+          <span class="account-avatar" id="accountAvatarBtn">U</span>
+          <span id="accountBtnLabel" data-i18n="nav-account">Account</span>
+          <span class="notif-badge" id="notificationBadge">0</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-header">
+            <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
+            <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
+          </div>
+          <div>
+            <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">
+              Notifications
+              <span class="menu-badge" id="menuNotificationBadge">0</span>
+            </button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
+            <div class="account-menu-controls">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en" data-i18n="lang-english">English</button>
+                <button class="lang-btn" data-lang="zh" data-i18n="lang-chinese">中文</button>
+              </div>
+              <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">Night</button>
+            </div>
+          </div>
+          <div class="account-menu-footer">
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="menu-logout">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <h1 data-i18n="settings-title">Settings</h1>
+      <p data-i18n="settings-subtitle">Manage your account and notifications.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="account-layout">
+          <div class="account-profile">
+            <div class="avatar" id="accountAvatar">U</div>
+            <div class="account-message" id="accountMessage" data-i18n="account-logged-in">You're logged in.</div>
+            <div class="account-email" id="accountEmail">name@example.com</div>
+          </div>
+          <div class="account-panel">
+            <div class="account-accordion">
+              <div class="account-accordion-item" data-acc="accounting">
+                <button type="button" class="account-accordion-btn">
+                  <strong data-i18n="accounting-settings-title">Account Settings</strong>
+                  <span>+</span>
+                </button>
+                <div class="account-accordion-content">
+                  <div class="account-sublist">
+                    <div class="account-subitem" data-subacc="profile">
+                      <button type="button">
+                        <span data-i18n="accounting-update-profile">Update profile</span>
+                        <span>+</span>
+                      </button>
+                      <div class="account-subitem-content">
+                        <form id="profileForm">
+                          <div>
+                            <label for="usernameInput" data-i18n="accounting-username-label">Username</label>
+                            <input id="usernameInput" name="usernameInput" type="text" required />
+                          </div>
+                          <div class="account-actions">
+                            <button type="submit" data-i18n="accounting-update-profile">Update profile</button>
+                          </div>
+                          <div class="account-status" id="profileStatus" data-i18n="accounting-status">Update your username anytime.</div>
+                        </form>
+                      </div>
+                    </div>
+                    <div class="account-subitem" data-subacc="password">
+                      <button type="button">
+                        <span data-i18n="accounting-update-password">Update password</span>
+                        <span>+</span>
+                      </button>
+                      <div class="account-subitem-content">
+                        <form id="passwordForm">
+                          <div>
+                            <label for="currentPassword" data-i18n="accounting-current-password">Current password</label>
+                            <input id="currentPassword" name="currentPassword" type="password" required />
+                          </div>
+                          <div>
+                            <label for="newPassword" data-i18n="accounting-new-password">New password</label>
+                            <input id="newPassword" name="newPassword" type="password" minlength="8" required />
+                          </div>
+                          <div>
+                            <label for="confirmPassword" data-i18n="accounting-confirm-password">Confirm new password</label>
+                            <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required />
+                          </div>
+                          <div class="account-actions">
+                            <button type="submit" data-i18n="accounting-update-password">Update password</button>
+                          </div>
+                          <div class="account-status" id="passwordStatus" data-i18n="accounting-password-status">Update your password anytime.</div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="account-accordion-item" data-acc="notifications">
+                <button type="button" class="account-accordion-btn">
+                  <strong data-i18n="notification-settings-title">Notification Settings</strong>
+                  <span>+</span>
+                </button>
+                <div class="account-accordion-content">
+                  <form id="notificationForm">
+                    <div>
+                      <label for="digestTime" data-i18n="notification-digest-time">Daily digest time</label>
+                      <input id="digestTime" name="digestTime" type="time" required />
+                    </div>
+                    <div class="checkbox-row">
+                      <input id="digestEnabled" name="digestEnabled" type="checkbox" />
+                      <label for="digestEnabled">
+                        <span data-i18n="notification-enable">Enable daily digest</span>
+                      </label>
+                    </div>
+                    <div class="account-actions">
+                      <button type="submit" data-i18n="notification-save">Save notification settings</button>
+                    </div>
+                    <div class="account-status" id="notificationStatus" data-i18n="notification-status">Configure when to receive your digest.</div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const translations = {
+        en: {
+          "nav-account": "Account",
+          "menu-guest-title": "Guest",
+          "menu-guest-subtitle": "Sign in to manage your account.",
+          "menu-home": "Home",
+          "menu-notifications": "Notifications",
+          "menu-settings": "Settings",
+          "menu-saved-preferences": "Saved Preferences",
+          "menu-logout": "Log out",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "settings-title": "Settings",
+          "settings-subtitle": "Manage your account and notifications.",
+          "account-logged-in": "You're logged in.",
+          "accounting-settings-title": "Account Settings",
+          "accounting-username-label": "Username",
+          "accounting-update-profile": "Update profile",
+          "accounting-status": "Update your username anytime.",
+          "accounting-current-password": "Current password",
+          "accounting-new-password": "New password",
+          "accounting-confirm-password": "Confirm new password",
+          "accounting-update-password": "Update password",
+          "accounting-password-status": "Update your password anytime.",
+          "notification-settings-title": "Notification Settings",
+          "notification-digest-time": "Daily digest time",
+          "notification-enable": "Enable daily digest",
+          "notification-save": "Save notification settings",
+          "notification-status": "Configure when to receive your digest.",
+          "status-username-required": "Username required.",
+          "status-username-invalid": "Username must be 2-30 characters.",
+          "status-username-failed": "Failed to update username.",
+          "status-username-updated": "Username updated.",
+          "status-password-mismatch": "Passwords do not match.",
+          "status-password-short": "Password must be at least 8 characters.",
+          "status-password-invalid": "Current password is incorrect.",
+          "status-password-required": "Password required.",
+          "status-password-failed": "Failed to update password.",
+          "status-password-updated": "Password updated.",
+          "status-notification-failed": "Failed to update notification settings.",
+          "status-notification-updated": "Notification settings updated."
+        },
+        zh: {
+          "nav-account": "帳號",
+          "menu-guest-title": "訪客",
+          "menu-guest-subtitle": "登入後才能管理帳號。",
+          "menu-home": "首頁",
+          "menu-notifications": "通知",
+          "menu-settings": "設定",
+          "menu-saved-preferences": "已存偏好",
+          "menu-logout": "登出",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "settings-title": "設定",
+          "settings-subtitle": "管理帳號與通知設定。",
+          "account-logged-in": "已登入。",
+          "accounting-settings-title": "帳號設定",
+          "accounting-username-label": "使用者名稱",
+          "accounting-update-profile": "更新資料",
+          "accounting-status": "你可以隨時更新名稱。",
+          "accounting-current-password": "目前密碼",
+          "accounting-new-password": "新密碼",
+          "accounting-confirm-password": "確認新密碼",
+          "accounting-update-password": "更新密碼",
+          "accounting-password-status": "你可以隨時更新密碼。",
+          "notification-settings-title": "通知設定",
+          "notification-digest-time": "每日摘要時間",
+          "notification-enable": "啟用每日摘要",
+          "notification-save": "儲存通知設定",
+          "notification-status": "設定每日摘要的時間。",
+          "status-username-required": "請輸入使用者名稱。",
+          "status-username-invalid": "使用者名稱需 2-30 字。",
+          "status-username-failed": "更新名稱失敗。",
+          "status-username-updated": "名稱已更新。",
+          "status-password-mismatch": "密碼不一致。",
+          "status-password-short": "密碼至少 8 碼。",
+          "status-password-invalid": "目前密碼不正確。",
+          "status-password-required": "請輸入密碼。",
+          "status-password-failed": "更新密碼失敗。",
+          "status-password-updated": "密碼已更新。",
+          "status-notification-failed": "更新通知設定失敗。",
+          "status-notification-updated": "通知設定已更新。"
+        }
+      };
+      const TOKEN_KEY = 'dailyDigestToken';
+      const THEME_KEY = 'dailyDigestTheme';
+      const LANG_KEY = 'dailyDigestLang';
+      const accountBtn = document.getElementById('accountBtn');
+      const accountBtnLabel = document.getElementById('accountBtnLabel');
+      const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const menuNotificationBadge = document.getElementById('menuNotificationBadge');
+      const accountMenu = document.getElementById('accountMenu');
+      const menuHome = document.getElementById('menuHome');
+      const menuAccountSettings = document.getElementById('menuAccountSettings');
+      const menuSavedPreferences = document.getElementById('menuSavedPreferences');
+      const menuNotifications = document.getElementById('menuNotifications');
+      const themeToggle = document.getElementById('themeToggle');
+      const menuLogout = document.getElementById('menuLogout');
+      const menuUsername = document.getElementById('menuUsername');
+      const menuEmail = document.getElementById('menuEmail');
+      const accountEmail = document.getElementById('accountEmail');
+      const accountAvatar = document.getElementById('accountAvatar');
+      const accountMessage = document.getElementById('accountMessage');
+      const profileForm = document.getElementById('profileForm');
+      const profileStatus = document.getElementById('profileStatus');
+      const usernameInput = document.getElementById('usernameInput');
+      const passwordForm = document.getElementById('passwordForm');
+      const passwordStatus = document.getElementById('passwordStatus');
+      const currentPasswordInput = document.getElementById('currentPassword');
+      const newPasswordInput = document.getElementById('newPassword');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const notificationForm = document.getElementById('notificationForm');
+      const notificationStatus = document.getElementById('notificationStatus');
+      const digestTimeInput = document.getElementById('digestTime');
+      const digestEnabledInput = document.getElementById('digestEnabled');
+      const accordionItems = document.querySelectorAll('.account-accordion-item');
+      const subItems = document.querySelectorAll('.account-subitem');
+      let isMenuOpen = false;
+      let currentUser = null;
+      let currentLang = 'en';
+      let isAuthenticated = false;
+
+      function getAuthToken() {
+        try {
+          return window.localStorage.getItem(TOKEN_KEY);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setAuthToken(token) {
+        try {
+          if (token) {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY);
+          }
+        } catch (e) {
+          console.error('auth token storage error', e);
+        }
+      }
+
+      function getDisplayName(email) {
+        if (!email) return '';
+        const parts = email.split('@');
+        return parts[0] || email;
+      }
+
+      function openMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        isMenuOpen = true;
+      }
+
+      function closeMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        isMenuOpen = false;
+      }
+
+      async function loadCurrentUser() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+        try {
+          const resp = await fetch('/api/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            setAuthToken(null);
+            window.location.href = '/';
+            return;
+          }
+          const data = await resp.json();
+          currentUser = data.user || null;
+          isAuthenticated = true;
+          const displayName = currentUser?.username || getDisplayName(currentUser?.email || '');
+          if (accountBtnLabel) accountBtnLabel.textContent = displayName;
+          if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (menuUsername) menuUsername.textContent = displayName;
+          if (menuEmail) menuEmail.textContent = currentUser?.email || '';
+          if (accountEmail) accountEmail.textContent = currentUser?.email || '';
+          if (accountAvatar) accountAvatar.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (accountMessage) accountMessage.textContent = translations[currentLang]['account-logged-in'];
+          if (usernameInput) usernameInput.value = displayName;
+          loadNotificationBadge();
+          await loadNotificationSettings();
+        } catch (e) {
+          console.error('loadCurrentUser error', e);
+        }
+      }
+
+      async function loadNotificationBadge() {
+        const token = getAuthToken();
+        if (!token) {
+          updateNotificationBadge(0);
+          return;
+        }
+        try {
+          const resp = await fetch('/api/notifications', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            updateNotificationBadge(0);
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          const unread = items.filter(item => !item.read_at).length;
+          updateNotificationBadge(unread);
+        } catch (e) {
+          console.error('loadNotificationBadge error', e);
+          updateNotificationBadge(0);
+        }
+      }
+
+      function updateNotificationBadge(count) {
+        if (!notificationBadge) return;
+        if (count > 0) {
+          notificationBadge.textContent = count > 99 ? '99+' : String(count);
+          notificationBadge.style.display = 'inline-flex';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.textContent = count > 99 ? '99+' : String(count);
+            menuNotificationBadge.style.display = 'inline-flex';
+          }
+        } else {
+          notificationBadge.style.display = 'none';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.style.display = 'none';
+          }
+        }
+      }
+
+      async function loadNotificationSettings() {
+        const token = getAuthToken();
+        if (!token) return;
+        try {
+          const resp = await fetch('/api/notification-settings', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) return;
+          const data = await resp.json();
+          const settings = data.settings;
+          if (!settings) return;
+          if (digestTimeInput) digestTimeInput.value = settings.digest_time || '';
+          if (digestEnabledInput) digestEnabledInput.checked = !!settings.enabled;
+        } catch (e) {
+          console.error('loadNotificationSettings error', e);
+        }
+      }
+
+      if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+          if (isMenuOpen) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+      }
+
+      if (menuHome) {
+        menuHome.addEventListener('click', () => {
+          window.location.href = '/';
+        });
+      }
+
+      if (menuAccountSettings) {
+        menuAccountSettings.addEventListener('click', () => {
+          window.location.href = '/account.html';
+        });
+      }
+
+      if (menuSavedPreferences) {
+        menuSavedPreferences.addEventListener('click', () => {
+          window.location.href = '/preferences.html';
+        });
+      }
+
+      if (menuNotifications) {
+        menuNotifications.addEventListener('click', () => {
+          window.location.href = '/notifications.html';
+        });
+      }
+
+      const langButtons = document.querySelectorAll('.lang-btn');
+
+      function applyLangSelection(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+        try {
+          window.localStorage.setItem(LANG_KEY, lang);
+        } catch (e) {
+          console.error('lang save error', e);
+        }
+        langButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        updateTranslations();
+        if (accountMessage) accountMessage.textContent = translations[currentLang]['account-logged-in'];
+      }
+
+      function initLanguage() {
+        let lang = 'en';
+        try {
+          const stored = window.localStorage.getItem(LANG_KEY);
+          if (stored === 'en' || stored === 'zh') {
+            lang = stored;
+          }
+        } catch (e) {
+          console.error('lang read error', e);
+        }
+        applyLangSelection(lang);
+      }
+
+      if (langButtons.length) {
+        langButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            applyLangSelection(btn.dataset.lang);
+          });
+        });
+      }
+
+      if (menuLogout) {
+        menuLogout.addEventListener('click', () => {
+          setAuthToken(null);
+          window.location.href = '/';
+        });
+      }
+
+      if (accordionItems) {
+        accordionItems.forEach((item) => {
+          const button = item.querySelector('.account-accordion-btn');
+          if (!button) return;
+          button.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            accordionItems.forEach((other) => other.classList.remove('active'));
+            if (!isActive) {
+              item.classList.add('active');
+            }
+          });
+        });
+      }
+
+      if (subItems) {
+        subItems.forEach((item) => {
+          const button = item.querySelector('button');
+          if (!button) return;
+          button.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            subItems.forEach((other) => {
+              other.classList.remove('active');
+              const indicator = other.querySelector('button span:last-child');
+              if (indicator) indicator.textContent = '+';
+            });
+            if (!isActive) {
+              item.classList.add('active');
+              const indicator = item.querySelector('button span:last-child');
+              if (indicator) indicator.textContent = '-';
+            }
+          });
+        });
+      }
+
+      if (profileForm) {
+        profileForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const token = getAuthToken();
+          if (!token) return;
+          const username = usernameInput?.value?.trim() || '';
+          if (!username) {
+            if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-required'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/update-profile', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ username })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              const error = data.error;
+              if (error === 'username_required') {
+                if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-required'];
+              } else if (error === 'username_invalid_length') {
+                if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-invalid'];
+              } else {
+                if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-failed'];
+              }
+              return;
+            }
+            if (currentUser) currentUser.username = data.username;
+            if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-updated'];
+            loadCurrentUser();
+          } catch (e) {
+            console.error('profile update error', e);
+            if (profileStatus) profileStatus.textContent = translations[currentLang]['status-username-failed'];
+          }
+        });
+      }
+
+      if (passwordForm) {
+        passwordForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const token = getAuthToken();
+          if (!token) return;
+          const currentPassword = currentPasswordInput?.value || '';
+          const newPassword = newPasswordInput?.value || '';
+          const confirmPassword = confirmPasswordInput?.value || '';
+          if (newPassword !== confirmPassword) {
+            if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-mismatch'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/change-password', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+              })
+            });
+            if (!resp.ok) {
+              const data = await resp.json().catch(() => ({}));
+              const error = data.error;
+              if (error === 'password_too_short') {
+                if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-short'];
+              } else if (error === 'invalid_current_password') {
+                if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-invalid'];
+              } else if (error === 'passwords_required') {
+                if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-required'];
+              } else {
+                if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-failed'];
+              }
+              return;
+            }
+            if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-updated'];
+            if (currentPasswordInput) currentPasswordInput.value = '';
+            if (newPasswordInput) newPasswordInput.value = '';
+            if (confirmPasswordInput) confirmPasswordInput.value = '';
+          } catch (e) {
+            console.error('password update error', e);
+            if (passwordStatus) passwordStatus.textContent = translations[currentLang]['status-password-failed'];
+          }
+        });
+      }
+
+      if (notificationForm) {
+        notificationForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const token = getAuthToken();
+          if (!token) return;
+          const digestTime = digestTimeInput?.value || '';
+          const enabled = !!digestEnabledInput?.checked;
+          try {
+            const resp = await fetch('/api/notification-settings', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ digest_time: digestTime, enabled })
+            });
+            if (!resp.ok) {
+              if (notificationStatus) notificationStatus.textContent = translations[currentLang]['status-notification-failed'];
+              return;
+            }
+            if (notificationStatus) notificationStatus.textContent = translations[currentLang]['status-notification-updated'];
+          } catch (e) {
+            console.error('notification settings update error', e);
+            if (notificationStatus) notificationStatus.textContent = translations[currentLang]['status-notification-failed'];
+          }
+        });
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!isMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (accountMenu && accountMenu.contains(target)) return;
+        if (accountBtn && accountBtn.contains(target)) return;
+        closeMenu();
+      });
+
+      function updateTranslations() {
+        const skipKeysWhenAuthed = new Set([
+          'nav-account',
+          'menu-guest-title',
+          'menu-guest-subtitle'
+        ]);
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (isAuthenticated && skipKeysWhenAuthed.has(key)) {
+            return;
+          }
+          if (translations[currentLang][key]) {
+            el.textContent = translations[currentLang][key];
+          }
+        });
+      }
+
+      function applyTheme(theme) {
+        const body = document.body;
+        if (theme === 'dark') {
+          body.classList.add('dark');
+        } else {
+          body.classList.remove('dark');
+        }
+        if (themeToggle) {
+          themeToggle.textContent = theme === 'dark' ? 'Day' : 'Night';
+        }
+      }
+
+      function initTheme() {
+        let theme = 'light';
+        const stored = window.localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        }
+        applyTheme(theme);
+        if (themeToggle) {
+          themeToggle.addEventListener('click', () => {
+            const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            window.localStorage.setItem(THEME_KEY, next);
+          });
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        initLanguage();
+        loadCurrentUser();
+      });
+    </script>
+  </body>
+</html>

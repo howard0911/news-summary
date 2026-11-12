@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAILY DIGEST</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%226%22 fill=%22%23C2361C%22/></svg>" />
+    <link rel="stylesheet" href="digest.css" />
+    <style>
+      /* ---------- Masthead ---------- */
+      .masthead { padding-top: 20px; padding-bottom: 0; }
+
+      .wire-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        min-height: 36px;
+        align-items: center;
+        padding-right: 200px;
+        color: var(--ink-2);
+      }
+
+      .nameplate {
+        margin-top: 40px;
+        font-size: clamp(56px, 10vw, 120px);
+        line-height: 0.92;
+        font-weight: 650;
+        letter-spacing: -0.055em;
+      }
+
+      .nameplate-zh {
+        display: block;
+        margin-top: 12px;
+        font-family: var(--f-zh);
+        font-size: clamp(22px, 3vw, 32px);
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: var(--ink-2);
+      }
+
+      .masthead .deck {
+        margin-top: 20px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--rule-strong);
+        font-size: 18px;
+        max-width: none;
+      }
+
+      /* ---------- Edition sentence ---------- */
+      .edition { padding-top: 40px; padding-bottom: 48px; border-bottom: 1px solid var(--rule); }
+
+      .edition-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 32px;
+        align-items: end;
+      }
+
+      .sentence {
+        margin-top: 16px;
+        font-size: clamp(26px, 3.6vw, 40px);
+        line-height: 1.3;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        max-width: 26em;
+      }
+
+      .sentence .field {
+        display: inline-block;
+        width: auto;
+        min-width: 4ch;
+        max-width: 100%;
+        field-sizing: content;
+        margin: 0;
+        padding: 0 2px;
+        border: 0;
+        border-bottom: 2px solid var(--accent);
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        letter-spacing: inherit;
+        vertical-align: baseline;
+        transition: background-color 150ms ease;
+      }
+
+      .sentence select.field {
+        appearance: none;
+        cursor: pointer;
+        padding-right: 2px;
+      }
+
+      .sentence select.field option { font-size: 16px; font-weight: 400; }
+
+      .sentence .field:focus { outline: none; background: var(--wash); }
+
+      .sentence .field::placeholder { color: var(--ink-3); font-weight: 400; }
+
+      .edition-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 24px;
+        margin-top: 24px;
+      }
+
+      .helper-text { color: var(--ink-3); font-size: 14px; }
+
+      .pref-status { color: var(--ink-2); }
+
+      /* ---------- Seal button ---------- */
+      .seal {
+        width: 112px;
+        height: 112px;
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border-radius: 6px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        box-shadow: inset 0 0 0 3px var(--accent), inset 0 0 0 5px var(--accent-ink);
+        transform: rotate(-3deg);
+        transition: transform 120ms ease;
+      }
+
+      .seal:hover { transform: rotate(-3deg) scale(1.03); }
+      .seal:active { transform: rotate(-3deg) scale(0.97); }
+      .seal:disabled { opacity: 0.6; cursor: progress; }
+
+      .seal-zh {
+        font-family: var(--f-zh);
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.05em;
+      }
+
+      .seal-en {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+      }
+
+      /* ---------- Digest: parallel EN / 中文 ---------- */
+      .digest { padding-top: 56px; }
+
+      .section-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 20px;
+        margin-bottom: 24px;
+      }
+
+      .section-head h2 {
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 1.1;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .section-head .h-zh {
+        font-family: var(--f-zh);
+        font-size: clamp(24px, 3.2vw, 35px);
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--ink-2);
+      }
+
+      .col-heads,
+      .point {
+        display: grid;
+        grid-template-columns: 56px 1fr 1fr;
+        column-gap: 32px;
+      }
+
+      .col-heads {
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--rule-strong);
+        color: var(--ink-2);
+      }
+
+      .col-heads span:first-child { grid-column: 2; }
+
+      .points { list-style: none; }
+
+      .point {
+        padding: 24px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .point-num {
+        font-size: 56px;
+        line-height: 0.9;
+        font-weight: 300;
+        letter-spacing: -0.04em;
+        color: var(--accent);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .point .en { font-size: 18px; line-height: 1.6; max-width: 62ch; }
+
+      .point .zh { font-size: 16.5px; line-height: 1.8; max-width: 36em; }
+
+      .takeaway {
+        margin-top: 48px;
+        display: grid;
+        grid-template-columns: 56px 1fr 1fr;
+        column-gap: 32px;
+        row-gap: 16px;
+      }
+
+      .takeaway .kicker { grid-column: 2 / -1; }
+
+      .takeaway blockquote {
+        font-size: clamp(24px, 2.8vw, 32px);
+        line-height: 1.3;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+
+      .takeaway blockquote:first-of-type { grid-column: 2; }
+
+      .takeaway blockquote[lang="zh-Hant"] {
+        font-size: clamp(20px, 2.3vw, 26px);
+        line-height: 1.6;
+      }
+
+      .byline {
+        margin-top: 48px;
+        padding: 10px 0;
+        border-top: 1px solid var(--rule-strong);
+        border-bottom: 1px solid var(--rule-strong);
+        color: var(--ink-2);
+      }
+
+      .byline .dot { color: var(--accent); }
+
+      .ai-disabled { margin-top: 48px; }
+
+      /* ---------- The wire ---------- */
+      .wire { padding-top: 64px; }
+
+      .news-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 32px;
+        border-top: 1px solid var(--rule-strong);
+      }
+
+      .news-list:empty { border-top: 0; }
+
+      .news-item {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .news-meta { display: flex; gap: 12px; color: var(--ink-2); margin-bottom: 6px; }
+
+      .news-meta .src { color: var(--ink); }
+
+      .news-item h3 {
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+      }
+
+      .news-item a {
+        text-decoration: none;
+        background-image: linear-gradient(var(--accent), var(--accent));
+        background-repeat: no-repeat;
+        background-position: 0 100%;
+        background-size: 0 1px;
+        transition: background-size 250ms var(--ease-enter);
+      }
+
+      .news-item a:hover { background-size: 100% 1px; }
+
+      /* ---------- Press run ---------- */
+      .press > * {
+        animation: press-in 220ms var(--ease-enter) both;
+        animation-delay: calc(var(--i, 0) * 40ms);
+      }
+
+      @keyframes press-in {
+        from { opacity: 0; transform: translateY(2px); }
+        to { opacity: 1; transform: none; }
+      }
+
+      /* ---------- Auth page ---------- */
+      .auth-page {
+        position: fixed;
+        inset: 0;
+        background: var(--paper);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 32px var(--gutter);
+        z-index: 300;
+        overflow-y: auto;
+      }
+
+      .auth-page-card {
+        width: min(560px, 100%);
+        border-top: 1px solid var(--rule-strong);
+        padding-top: 24px;
+      }
+
+      .auth-page-header { margin-bottom: 16px; }
+
+      .auth-page-header h2 {
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 1.1;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .auth-page-header p { margin-top: 8px; color: var(--ink-2); }
+
+      .auth-status {
+        font-family: var(--f-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-2);
+        margin-bottom: 16px;
+      }
+
+      .auth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+
+      .auth-reset {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+      }
+
+      .auth-reset.is-open { display: flex; }
+
+      .auth-page-footer { margin-top: 24px; }
+
+      /* ---------- Responsive ---------- */
+      @media (max-width: 899px) {
+        .col-heads { display: none; }
+
+        .point {
+          grid-template-columns: 52px 1fr;
+          column-gap: 12px;
+          row-gap: 8px;
+        }
+
+        .point-num { font-size: 44px; grid-row: span 2; }
+
+        .point .zh { grid-column: 2; color: var(--ink-2); }
+
+        .takeaway { grid-template-columns: 1fr; }
+
+        .takeaway .kicker,
+        .takeaway blockquote:first-of-type { grid-column: 1; }
+
+        .news-list { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 719px) {
+        .wire-strip { padding-right: 0; padding-top: 52px; }
+        .nameplate { margin-top: 24px; }
+        .edition-row { grid-template-columns: 1fr; gap: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-actions">
+      <div class="account-menu-wrapper">
+        <button class="account-btn" id="accountBtn" type="button">
+          <span class="account-avatar" id="accountAvatarBtn">U</span>
+          <span id="accountBtnLabel" data-i18n="nav-login">Log in</span>
+          <span class="notif-badge" id="notificationBadge">0</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-header" id="menuHeader" hidden>
+            <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
+            <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
+          </div>
+          <div>
+            <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications" hidden>
+              Notifications
+              <span class="menu-badge" id="menuNotificationBadge">0</span>
+            </button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences" hidden>Saved Preferences</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings" hidden>Settings</button>
+            <button class="account-menu-item" id="menuLogin" type="button" data-i18n="menu-login">Log in</button>
+            <div class="account-menu-controls" id="menuControls">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+              </div>
+              <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">Night</button>
+            </div>
+          </div>
+          <div class="account-menu-footer" id="menuFooter" hidden>
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="auth-logout" hidden>Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <section class="auth-page" id="authPage" style="display: none;">
+        <div class="auth-page-card">
+          <div class="auth-page-header">
+            <div>
+              <h2 data-i18n="auth-title">Account</h2>
+              <p data-i18n="auth-subtitle">Sign in to save preferences and history.</p>
+            </div>
+          </div>
+          <div class="auth-status" id="authStatus" data-i18n="auth-status-signed-out">Not signed in.</div>
+          <form id="authForm" class="auth-form">
+          <div>
+            <label for="authEmail" data-i18n="auth-email">Email</label>
+            <input id="authEmail" name="authEmail" type="email" data-i18n-placeholder="auth-email-placeholder" placeholder="name@example.com" required />
+          </div>
+          <div>
+            <label for="authPassword" data-i18n="auth-password">Password</label>
+            <input id="authPassword" name="authPassword" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" required />
+          </div>
+          <div class="auth-actions">
+            <button type="button" data-auth-action="login" data-i18n="auth-login">Log in</button>
+            <button type="button" class="btn-outline" data-auth-action="signup" data-i18n="auth-signup">Sign up</button>
+            <button type="button" class="auth-link" id="forgotPasswordBtn" data-i18n="auth-forgot">Forgot password?</button>
+          </div>
+          <div class="auth-reset" id="resetPanel" hidden>
+            <div>
+              <label for="resetToken" data-i18n="auth-reset-token">Reset token</label>
+              <input id="resetToken" name="resetToken" type="text" data-i18n-placeholder="auth-reset-token-placeholder" placeholder="Paste reset token" />
+            </div>
+            <div>
+              <label for="resetPassword" data-i18n="auth-reset-password">New password</label>
+              <input id="resetPassword" name="resetPassword" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" />
+            </div>
+            <div>
+              <label for="resetPasswordConfirm" data-i18n="auth-reset-confirm">Confirm new password</label>
+              <input id="resetPasswordConfirm" name="resetPasswordConfirm" type="password" data-i18n-placeholder="auth-password-placeholder" placeholder="At least 8 characters" minlength="8" />
+            </div>
+            <div class="auth-actions">
+              <button type="button" id="requestResetBtn" data-i18n="auth-request-reset">Send reset link</button>
+              <button type="button" class="btn-outline" id="resetPasswordBtn" data-i18n="auth-reset-submit">Reset password</button>
+            </div>
+            <div class="auth-status" id="resetStatus"></div>
+          </div>
+        </form>
+        <div class="auth-page-footer">
+          <button type="button" class="btn-outline auth-close" id="authCloseBtn" data-i18n="auth-close">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="mainContent">
+      <header class="masthead">
+        <div class="wire-strip mono">
+          <span id="dateline"></span>
+          <span>EN · <span lang="zh-Hant">中文</span></span>
+        </div>
+        <h1 class="nameplate"><span>Daily Digest</span><span class="nameplate-zh" lang="zh-Hant">每日摘要</span></h1>
+        <p class="deck" data-i18n="subtitle">Get your daily news summary in seconds</p>
+      </header>
+
+      <main>
+      <section class="edition">
+        <form id="interestForm">
+          <div class="kicker" data-i18n="edition-kicker">Today's edition</div>
+          <div class="edition-row">
+            <p class="sentence">
+              <span data-i18n="sentence-the">The</span>
+              <label for="topic" class="sr-only" data-i18n="topic-label">What news topics interest you?</label>
+              <input
+                id="topic"
+                name="topic"
+                class="field"
+                data-i18n-placeholder="topic-placeholder"
+                placeholder="Technology"
+                required
+              />
+              <span data-i18n="sentence-edition">edition, for</span>
+              <label for="address" class="sr-only" data-i18n="address-label">Location (City, State/Province, Country)</label>
+              <input
+                id="address"
+                name="address"
+                class="field"
+                data-i18n-placeholder="address-placeholder"
+                placeholder="Chicago, USA"
+                required
+              /><span data-i18n="sentence-from">, from</span>
+              <label for="presetSource" class="sr-only" data-i18n="source-label">Source</label>
+              <select id="presetSource" name="presetSource" class="field">
+                <option value="">Google News</option>
+                <option value="bbc_world">BBC News - World</option>
+                <option value="cnn_world">CNN - World</option>
+                <option value="cnn_international">CNN - International Edition</option>
+                <option value="nyt_world">NYT - World News</option>
+                <option value="nyt_top">NYT - Top Stories</option>
+                <option value="guardian_world">The Guardian - World</option>
+                <option value="wapo_world">Washington Post - World</option>
+                <option value="wsj_world">WSJ - World News</option>
+                <option value="latimes_world">LA Times - World &amp; Nation</option>
+                <option value="cnbc_international">CNBC International</option>
+                <option value="cnbc_us">CNBC - US Top News</option>
+                <option value="yahoo_news">Yahoo News - Latest</option>
+                <option value="yahoo_mostviewed">Yahoo News - Most viewed</option>
+                <option value="huffpost_world">HuffPost - World News</option>
+                <option value="fox_news">FOX News - Latest</option>
+                <option value="toi_world">Times of India - World</option>
+                <option value="ndtv_world">NDTV - World News</option>
+                <option value="reddit_worldnews">Reddit - r/worldnews</option>
+                <option value="google_top">Google News - Top stories</option>
+                <option value="politico_playbook">Politico - Playbook</option>
+              </select><span data-i18n="sentence-end">.</span>
+            </p>
+            <button type="submit" class="seal" aria-label="Generate Daily Digest">
+              <span class="seal-zh" lang="zh-Hant">付印</span>
+              <span class="seal-en">GO TO PRESS</span>
+            </button>
+          </div>
+          <div class="edition-tools">
+            <button type="button" class="btn-ghost" id="detectLocation" data-i18n="detect-location">Detect my location</button>
+            <button type="button" class="btn-ghost" id="savePreferences" data-i18n="save-preferences">Save Preferences</button>
+            <span class="pref-status mono" id="prefStatus" data-i18n="pref-status-idle">Save your preferences after you sign in.</span>
+          </div>
+        </form>
+      </section>
+
+      <div id="aiDisabledNotice" class="alert ai-disabled" style="display: none;" data-i18n="ai-disabled">
+        AI summarization is currently unavailable. News articles are displayed without AI-generated summaries.
+      </div>
+
+      <section id="takeawaySection" class="digest" style="display: none;">
+        <div class="section-head">
+          <h2>Things to Watch Today</h2>
+          <span class="h-zh" lang="zh-Hant">今天需要注意的事情</span>
+        </div>
+        <div class="col-heads mono" aria-hidden="true"><span>English</span><span lang="zh-Hant">中文</span></div>
+        <ol class="points" id="thingsToWatch"></ol>
+        <div class="takeaway" id="takeawayBox"></div>
+        <div class="byline mono" id="machineByline"></div>
+      </section>
+
+      <section class="wire">
+        <div class="section-head">
+          <h2>The Wire</h2>
+          <span class="h-zh" lang="zh-Hant">電訊</span>
+        </div>
+        <div id="status" class="status" data-i18n="status-default">Please submit the form to get your daily digest.</div>
+        <div class="news-list" id="newsList"></div>
+      </section>
+      </main>
+    </div>
+
+    <script>
+      // 多語言支援 - 默認英文優先
+      let currentLang = 'en';
+
+      const translations = {
+        zh: {
+          title: "每日摘要",
+          subtitle: "幾秒內獲取您的個性化新聞摘要",
+          "nav-login": "登入",
+          "menu-guest-title": "訪客",
+          "menu-guest-subtitle": "登入以管理你的帳戶。",
+          "menu-home": "首頁",
+          "menu-login": "登入",
+          "menu-settings": "設定",
+          "menu-saved-preferences": "已儲存偏好",
+          "menu-notifications": "通知",
+          "menu-theme-toggle": "切換深色模式",
+          "auth-title": "帳戶",
+          "auth-subtitle": "登入後可保存偏好與歷史紀錄。",
+          "auth-email": "Email",
+          "auth-email-placeholder": "name@example.com",
+          "auth-password": "密碼",
+          "auth-password-placeholder": "至少 8 個字元",
+          "auth-login": "登入",
+          "auth-signup": "註冊",
+          "auth-logout": "登出",
+          "auth-close": "返回",
+          "auth-forgot": "忘記密碼？",
+          "auth-reset-token": "重設代碼",
+          "auth-reset-token-placeholder": "貼上重設代碼",
+          "auth-reset-password": "新密碼",
+          "auth-reset-confirm": "確認新密碼",
+          "auth-request-reset": "寄送重設連結",
+          "auth-reset-submit": "重設密碼",
+          "auth-reset-email-required": "請輸入 Email 以重設密碼。",
+          "auth-reset-token-required": "請輸入重設代碼。",
+          "auth-reset-mismatch": "密碼不一致。",
+          "auth-reset-success": "密碼已更新，請重新登入。",
+          "auth-reset-invalid": "重設代碼無效或已過期。",
+          "auth-reset-requested": "如果信箱存在，已寄出重設連結。",
+          "auth-reset-sent": "已產生重設連結。（測試代碼：{token}）",
+          "auth-status-signed-out": "尚未登入。",
+          "auth-status-signed-in": "已登入：{email}",
+          "auth-status-error": "登入失敗，請檢查帳號密碼。",
+          "auth-status-logged-in": "你已登入。",
+          "auth-error-email-exists": "此 Email 已註冊。",
+          "auth-error-password-short": "密碼至少 8 個字元。",
+          "auth-error-missing": "請輸入 Email 與密碼。",
+          "save-preferences": "儲存偏好",
+          "pref-status-idle": "登入後可儲存偏好。",
+          "pref-status-saved": "偏好已儲存。",
+          "pref-status-error": "偏好儲存失敗。",
+          "pref-status-login-required": "請先登入再儲存偏好。",
+          "account-title": "帳戶設定",
+          "account-subtitle": "管理你的資料與密碼。",
+          "account-logged-in": "你已登入。",
+          "account-profile-title": "個人資料",
+          "account-username": "使用者名稱",
+          "account-update-profile": "更新資料",
+          "account-profile-idle": "可隨時更新使用者名稱。",
+          "account-profile-success": "使用者名稱已更新。",
+          "account-profile-error": "更新使用者名稱失敗。",
+          "saved-preferences-title": "已儲存偏好",
+          "account-password-title": "變更密碼",
+          "account-current-password": "目前密碼",
+          "account-new-password": "新密碼",
+          "account-confirm-password": "確認新密碼",
+          "account-update-password": "更新密碼",
+          "account-password-idle": "可隨時更新密碼。",
+          "account-password-mismatch": "新密碼不一致。",
+          "account-password-success": "密碼已更新。",
+          "account-password-error": "更新密碼失敗。",
+          "topic-label": "您對哪些新聞主題感興趣？",
+          "topic-placeholder": "科技",
+          "address-label": "位置（城市、州/省、國家）",
+          "address-placeholder": "台北，台灣",
+          "address-helper": "請輸入位置或點擊自動偵測",
+          "detect-location": "偵測我的位置",
+          "edition-kicker": "今日版",
+          "sentence-the": "今日",
+          "sentence-edition": "版・地點",
+          "sentence-from": "・來源",
+          "sentence-end": "。",
+          "source-label": "新聞來源",
+          "detecting-location": "正在偵測位置...",
+          "location-error": "無法偵測位置，請手動輸入。",
+          "location-success": "位置已偵測！",
+          "url-label": "自訂 RSS / 新聞網址（選填）",
+          "url-placeholder": "例如：https://example.com/rss",
+          "submit-btn": "生成每日摘要",
+          "helper-text": "正在獲取過去24小時的最新新聞...",
+          "status-default": "請提交表單以獲取您的每日摘要。",
+          "status-loading": "正在獲取最新新聞...",
+          "status-no-news": "目前沒有符合的新聞，換個關鍵字試試？",
+          "status-count": "找到 {count} 則相關新聞",
+          "takeaway-title": "今日重點",
+          "things-to-watch": "今天需要注意的事情",
+          "takeaway": "Take Away",
+          "error-fetch": "無法取得新聞",
+          "ai-disabled": "AI 摘要功能目前不可用。新聞文章將在沒有 AI 生成摘要的情況下顯示。"
+        },
+        en: {
+          title: "Daily Digest",
+          subtitle: "Get your personalized news summary in seconds",
+          "nav-login": "Log in",
+          "menu-guest-title": "Guest",
+          "menu-guest-subtitle": "Sign in to manage your account.",
+          "menu-home": "Home",
+          "menu-login": "Log in",
+          "menu-settings": "Settings",
+          "menu-saved-preferences": "Saved Preferences",
+          "menu-notifications": "Notifications",
+          "menu-theme-toggle": "Toggle Theme",
+          "auth-title": "Account",
+          "auth-subtitle": "Sign in to save preferences and history.",
+          "auth-email": "Email",
+          "auth-email-placeholder": "name@example.com",
+          "auth-password": "Password",
+          "auth-password-placeholder": "At least 8 characters",
+          "auth-login": "Log in",
+          "auth-signup": "Sign up",
+          "auth-logout": "Log out",
+          "auth-close": "Back",
+          "auth-forgot": "Forgot password?",
+          "auth-reset-token": "Reset token",
+          "auth-reset-token-placeholder": "Paste reset token",
+          "auth-reset-password": "New password",
+          "auth-reset-confirm": "Confirm new password",
+          "auth-request-reset": "Send reset link",
+          "auth-reset-submit": "Reset password",
+          "auth-reset-email-required": "Email required for reset.",
+          "auth-reset-token-required": "Reset token required.",
+          "auth-reset-mismatch": "Passwords do not match.",
+          "auth-reset-success": "Password updated. Please log in.",
+          "auth-reset-invalid": "Reset token is invalid or expired.",
+          "auth-reset-requested": "If the email exists, a reset link has been sent.",
+          "auth-reset-sent": "Reset link generated. (Dev token: {token})",
+          "auth-status-signed-out": "Not signed in.",
+          "auth-status-signed-in": "Signed in as {email}",
+          "auth-status-error": "Sign-in failed. Check your credentials.",
+          "auth-status-logged-in": "You're logged in.",
+          "auth-error-email-exists": "Email already exists.",
+          "auth-error-password-short": "Password must be at least 8 characters.",
+          "auth-error-missing": "Email and password are required.",
+          "save-preferences": "Save Preferences",
+          "pref-status-idle": "Save your preferences after you sign in.",
+          "pref-status-saved": "Preferences saved.",
+          "pref-status-error": "Failed to save preferences.",
+          "pref-status-login-required": "Please sign in before saving preferences.",
+          "account-title": "Account Settings",
+          "account-subtitle": "Manage your profile and password.",
+          "account-logged-in": "You're logged in.",
+          "account-profile-title": "Profile",
+          "account-username": "Username",
+          "account-update-profile": "Update profile",
+          "account-profile-idle": "Update your username anytime.",
+          "account-profile-success": "Username updated.",
+          "account-profile-error": "Failed to update username.",
+          "saved-preferences-title": "Saved Preferences",
+          "account-password-title": "Change password",
+          "account-current-password": "Current password",
+          "account-new-password": "New password",
+          "account-confirm-password": "Confirm new password",
+          "account-update-password": "Update password",
+          "account-password-idle": "Update your password anytime.",
+          "account-password-mismatch": "Passwords do not match.",
+          "account-password-success": "Password updated.",
+          "account-password-error": "Failed to update password.",
+          "topic-label": "What news topics interest you?",
+          "topic-placeholder": "Technology",
+          "address-label": "Location (City, State/Province, Country)",
+          "address-placeholder": "Chicago, USA",
+          "address-helper": "Enter your location or click to detect automatically",
+          "detect-location": "Detect my location",
+          "edition-kicker": "Today's edition",
+          "sentence-the": "The",
+          "sentence-edition": "edition, for",
+          "sentence-from": ", from",
+          "sentence-end": ".",
+          "source-label": "Source",
+          "detecting-location": "Detecting location...",
+          "location-error": "Unable to detect location. Please enter manually.",
+          "location-success": "Location detected!",
+          "url-label": "Custom RSS / News URL (Optional)",
+          "url-placeholder": "e.g., https://example.com/rss",
+          "submit-btn": "Generate Daily Digest",
+          "helper-text": "Fetching latest news from the past 24 hours...",
+          "status-default": "Please submit the form to get your daily digest.",
+          "status-loading": "Fetching latest news…",
+          "status-no-news": "No matching news found. Try different keywords?",
+          "status-count": "Found {count} relevant news articles",
+          "takeaway-title": "Today's Highlights",
+          "things-to-watch": "Things to Watch Today",
+          "takeaway": "Take Away",
+          "error-fetch": "Failed to fetch news",
+          "ai-disabled": "AI summarization is currently unavailable. News articles are displayed without AI-generated summaries."
+        }
+      };
+
+      const TOKEN_KEY = 'dailyDigestToken';
+      const LANG_KEY = 'dailyDigestLang';
+      const THEME_KEY = 'dailyDigestTheme';
+      let currentUser = null;
+
+      function updateLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (currentUser && key === 'nav-login') {
+            return;
+          }
+          if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+          }
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+          const key = el.getAttribute('data-i18n-placeholder');
+          if (translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+          }
+        });
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        renderAuthState();
+        if (currentUser && menuLogin) {
+          menuLogin.hidden = true;
+        }
+        try {
+          window.localStorage.setItem(LANG_KEY, lang);
+        } catch (e) {
+          console.error('lang save error', e);
+        }
+      }
+
+      const authStatus = document.getElementById('authStatus');
+      const authForm = document.getElementById('authForm');
+      const authEmailInput = document.getElementById('authEmail');
+      const authPasswordInput = document.getElementById('authPassword');
+      const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+      const resetPanel = document.getElementById('resetPanel');
+      const requestResetBtn = document.getElementById('requestResetBtn');
+      const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+      const resetTokenInput = document.getElementById('resetToken');
+      const resetPasswordInput = document.getElementById('resetPassword');
+      const resetPasswordConfirmInput = document.getElementById('resetPasswordConfirm');
+      const resetStatus = document.getElementById('resetStatus');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const savePreferencesBtn = document.getElementById('savePreferences');
+      const prefStatus = document.getElementById('prefStatus');
+      const addressInput = document.getElementById('address');
+      const topicInput = document.getElementById('topic');
+      const accountBtn = document.getElementById('accountBtn');
+      const accountBtnLabel = document.getElementById('accountBtnLabel');
+      const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const menuNotificationBadge = document.getElementById('menuNotificationBadge');
+      const accountMenu = document.getElementById('accountMenu');
+      const menuHome = document.getElementById('menuHome');
+      const menuLogin = document.getElementById('menuLogin');
+      const menuAccountSettings = document.getElementById('menuAccountSettings');
+      const menuSavedPreferences = document.getElementById('menuSavedPreferences');
+      const menuNotifications = document.getElementById('menuNotifications');
+      const themeToggle = document.getElementById('themeToggle');
+      const menuLogout = document.getElementById('menuLogout');
+      const menuUsername = document.getElementById('menuUsername');
+      const menuEmail = document.getElementById('menuEmail');
+      const menuHeader = document.getElementById('menuHeader');
+      const menuControls = document.getElementById('menuControls');
+      const menuFooter = document.getElementById('menuFooter');
+      const authPage = document.getElementById('authPage');
+      const authCloseBtn = document.getElementById('authCloseBtn');
+      const mainContent = document.getElementById('mainContent');
+      let isAuthOpen = false;
+      let isMenuOpen = false;
+
+      function getAuthToken() {
+        try {
+          return window.localStorage.getItem(TOKEN_KEY);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setAuthToken(token) {
+        try {
+          if (token) {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY);
+          }
+        } catch (e) {
+          console.error('auth token storage error', e);
+        }
+      }
+
+      function getDisplayName(email) {
+        if (!email) return '';
+        const parts = email.split('@');
+        return parts[0] || email;
+      }
+
+      function showAuthPage() {
+        if (authPage) authPage.style.display = 'flex';
+        if (mainContent) mainContent.style.display = 'none';
+        if (resetPanel) {
+          resetPanel.classList.remove('is-open');
+          resetPanel.hidden = true;
+        }
+        isAuthOpen = true;
+      }
+
+      function hideAuthPage() {
+        if (authPage) authPage.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
+        isAuthOpen = false;
+      }
+
+      function openMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        isMenuOpen = true;
+      }
+
+      function closeMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        isMenuOpen = false;
+      }
+
+      function getAuthErrorMessage(errorCode) {
+        if (!errorCode) return translations[currentLang]['auth-status-error'];
+        if (errorCode === 'email_already_exists') return translations[currentLang]['auth-error-email-exists'];
+        if (errorCode === 'password_too_short') return translations[currentLang]['auth-error-password-short'];
+        if (errorCode === 'email_and_password_required') return translations[currentLang]['auth-error-missing'];
+        return translations[currentLang]['auth-status-error'];
+      }
+
+      function getResetErrorMessage(errorCode) {
+        if (!errorCode) return translations[currentLang]['auth-reset-invalid'];
+        if (errorCode === 'email_required') return translations[currentLang]['auth-reset-email-required'];
+        if (errorCode === 'token_and_password_required') return translations[currentLang]['auth-reset-token-required'];
+        if (errorCode === 'password_too_short') return translations[currentLang]['auth-error-password-short'];
+        if (errorCode === 'invalid_or_expired') return translations[currentLang]['auth-reset-invalid'];
+        return translations[currentLang]['auth-reset-invalid'];
+      }
+
+      function renderAuthState() {
+        if (!authStatus) return;
+        if (currentUser) {
+          authStatus.textContent = translations[currentLang]['auth-status-logged-in'];
+          if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+          if (authEmailInput) authEmailInput.disabled = true;
+          if (authPasswordInput) authPasswordInput.disabled = true;
+          if (savePreferencesBtn) {
+            savePreferencesBtn.disabled = false;
+            savePreferencesBtn.classList.remove('btn-disabled');
+            savePreferencesBtn.title = '';
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-idle'];
+          const displayName = currentUser.username || getDisplayName(currentUser.email);
+          if (accountBtnLabel) accountBtnLabel.textContent = displayName;
+          if (accountBtnLabel) accountBtnLabel.removeAttribute('data-i18n');
+          if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (menuUsername) menuUsername.textContent = displayName;
+          if (menuEmail) menuEmail.textContent = currentUser.email || '';
+          // username chip removed
+          if (menuLogin) menuLogin.hidden = true;
+          setMenuAuthState(true);
+          loadNotificationBadge();
+          hideAuthPage();
+        } else {
+          authStatus.textContent = translations[currentLang]['auth-status-signed-out'];
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (authEmailInput) authEmailInput.disabled = false;
+          if (authPasswordInput) authPasswordInput.disabled = false;
+          if (savePreferencesBtn) {
+            savePreferencesBtn.disabled = true;
+            savePreferencesBtn.classList.add('btn-disabled');
+            savePreferencesBtn.title = translations[currentLang]['pref-status-login-required'];
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-login-required'];
+          if (accountBtnLabel) accountBtnLabel.textContent = translations[currentLang]['nav-login'];
+          if (accountBtnLabel) accountBtnLabel.setAttribute('data-i18n', 'nav-login');
+          if (accountAvatarBtn) accountAvatarBtn.textContent = 'U';
+          if (menuUsername) menuUsername.textContent = translations[currentLang]['menu-guest-title'];
+          if (menuEmail) menuEmail.textContent = translations[currentLang]['menu-guest-subtitle'];
+          // username chip removed
+          if (menuLogin) menuLogin.hidden = false;
+          setMenuAuthState(false);
+          updateNotificationBadge(0);
+          if (isAuthOpen) {
+            showAuthPage();
+          } else {
+            hideAuthPage();
+          }
+        }
+      }
+
+      async function loadCurrentUser() {
+        const token = getAuthToken();
+        if (!token) {
+          currentUser = null;
+          setMenuAuthState(false);
+          renderAuthState();
+          return;
+        }
+        try {
+          const resp = await fetch('/api/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) {
+            setAuthToken(null);
+            currentUser = null;
+            setMenuAuthState(false);
+            renderAuthState();
+            return;
+          }
+          const data = await resp.json();
+          currentUser = data.user || null;
+          renderAuthState();
+          if (currentUser && menuLogin) menuLogin.hidden = true;
+          await loadPreferences();
+        } catch (e) {
+          console.error('loadCurrentUser error', e);
+        }
+      }
+
+      function setMenuAuthState(isAuthed) {
+        const authedItems = [
+          menuHeader,
+          menuNotifications,
+          menuSavedPreferences,
+          menuAccountSettings,
+          menuFooter,
+          menuLogout
+        ];
+        authedItems.forEach((el) => {
+          if (!el) return;
+          el.hidden = !isAuthed;
+          el.style.display = isAuthed ? '' : 'none';
+        });
+        if (menuControls) {
+          menuControls.hidden = false;
+          menuControls.style.display = '';
+        }
+        if (menuLogin) {
+          menuLogin.hidden = isAuthed;
+          menuLogin.style.display = isAuthed ? 'none' : '';
+        }
+      }
+
+      async function loadNotificationBadge() {
+        const token = getAuthToken();
+        if (!token) {
+          updateNotificationBadge(0);
+          return;
+        }
+        try {
+          const resp = await fetch('/api/notifications', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) {
+            updateNotificationBadge(0);
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          const unread = items.filter(item => !item.read_at).length;
+          updateNotificationBadge(unread);
+        } catch (e) {
+          console.error('loadNotificationBadge error', e);
+          updateNotificationBadge(0);
+        }
+      }
+
+      function updateNotificationBadge(count) {
+        if (!notificationBadge) return;
+        if (count > 0) {
+          notificationBadge.textContent = count > 99 ? '99+' : String(count);
+          notificationBadge.style.display = 'inline-flex';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.textContent = count > 99 ? '99+' : String(count);
+            menuNotificationBadge.style.display = 'inline-flex';
+          }
+        } else {
+          notificationBadge.style.display = 'none';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.style.display = 'none';
+          }
+        }
+      }
+
+      async function loadPreferences() {
+        const token = getAuthToken();
+        if (!token) return;
+        try {
+          const resp = await fetch('/api/preferences', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!resp.ok) return;
+          const data = await resp.json();
+          const pref = data.preferences;
+          if (!pref) return;
+          if (pref.topic && topicInput) topicInput.value = pref.topic;
+          if (pref.region && addressInput) addressInput.value = pref.region;
+          if (pref.lang) updateLanguage(pref.lang);
+          if (pref.sources && Array.isArray(pref.sources)) {
+            const select = document.getElementById('presetSource');
+            if (select && pref.sources[0]) {
+              select.value = pref.sources[0];
+            }
+          }
+        } catch (e) {
+          console.error('loadPreferences error', e);
+        }
+      }
+
+      function collectPreferences() {
+        const presetSource = document.getElementById('presetSource')?.value || '';
+        return {
+          topic: topicInput?.value?.trim() || null,
+          region: addressInput?.value?.trim() || null,
+          lang: currentLang,
+          sources: presetSource ? [presetSource] : null
+        };
+      }
+
+      async function savePreferences() {
+        const token = getAuthToken();
+        if (!token) {
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-login-required'];
+          return;
+        }
+        try {
+          const payload = collectPreferences();
+          const resp = await fetch('/api/preferences', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) {
+            if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
+            return;
+          }
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-saved'];
+        } catch (e) {
+          console.error('savePreferences error', e);
+          if (prefStatus) prefStatus.textContent = translations[currentLang]['pref-status-error'];
+        }
+      }
+
+      // 初始化：設置默認語言
+      let initialLang = 'en';
+      try {
+        const storedLang = window.localStorage.getItem(LANG_KEY);
+        if (storedLang === 'en' || storedLang === 'zh') {
+          initialLang = storedLang;
+        }
+      } catch (e) {
+        console.error('lang read error', e);
+      }
+      updateLanguage(initialLang);
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateLanguage(btn.dataset.lang);
+        });
+      });
+
+      if (authForm) {
+        authForm.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const action = target.getAttribute('data-auth-action');
+          if (!action) return;
+          const email = authEmailInput?.value?.trim() || '';
+          const password = authPasswordInput?.value || '';
+          if (!email || !password) {
+            authStatus.textContent = translations[currentLang]['auth-error-missing'];
+            return;
+          }
+          const endpoint = action === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+          try {
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              authStatus.textContent = getAuthErrorMessage(data.error);
+              return;
+            }
+            if (data.token) {
+              setAuthToken(data.token);
+            }
+            currentUser = data.user || null;
+            isAuthOpen = false;
+            closeMenu();
+            renderAuthState();
+            await loadPreferences();
+          } catch (e) {
+            console.error('auth error', e);
+            authStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', () => {
+          if (!resetPanel) return;
+          const isOpen = resetPanel.classList.contains('is-open');
+          resetPanel.classList.toggle('is-open', !isOpen);
+          resetPanel.hidden = isOpen;
+          if (resetStatus) resetStatus.textContent = '';
+        });
+      }
+
+      if (requestResetBtn) {
+        requestResetBtn.addEventListener('click', async () => {
+          const email = authEmailInput?.value?.trim() || '';
+          if (!email) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-email-required'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/request-reset', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (resetStatus) resetStatus.textContent = getResetErrorMessage(data.error);
+              return;
+            }
+            if (resetTokenInput && data.token) {
+              resetTokenInput.value = data.token;
+            }
+            if (resetPanel) resetPanel.hidden = false;
+            if (resetStatus) {
+              const message = data.token
+                ? translations[currentLang]['auth-reset-sent'].replace('{token}', data.token)
+                : translations[currentLang]['auth-reset-requested'];
+              resetStatus.textContent = message;
+            }
+          } catch (e) {
+            console.error('request reset error', e);
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', async () => {
+          const token = resetTokenInput?.value?.trim() || '';
+          const newPassword = resetPasswordInput?.value || '';
+          const confirmPassword = resetPasswordConfirmInput?.value || '';
+          if (!token) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-token-required'];
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-mismatch'];
+            return;
+          }
+          try {
+            const resp = await fetch('/api/auth/reset-password', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ token, new_password: newPassword })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (resetStatus) resetStatus.textContent = getResetErrorMessage(data.error);
+              return;
+            }
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-reset-success'];
+            if (resetPasswordInput) resetPasswordInput.value = '';
+            if (resetPasswordConfirmInput) resetPasswordConfirmInput.value = '';
+          } catch (e) {
+            console.error('reset password error', e);
+            if (resetStatus) resetStatus.textContent = translations[currentLang]['auth-status-error'];
+          }
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          setAuthToken(null);
+          currentUser = null;
+          isAuthOpen = false;
+          closeMenu();
+          renderAuthState();
+        });
+      }
+
+      if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+          if (isMenuOpen) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+      }
+
+      if (menuLogin) {
+        menuLogin.addEventListener('click', () => {
+          showAuthPage();
+          authEmailInput?.focus();
+          closeMenu();
+        });
+      }
+
+      if (menuAccountSettings) {
+        menuAccountSettings.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/account.html';
+        });
+      }
+
+      if (menuSavedPreferences) {
+        menuSavedPreferences.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/preferences.html';
+        });
+      }
+
+      if (menuNotifications) {
+        menuNotifications.addEventListener('click', () => {
+          if (!currentUser) return;
+          window.location.href = '/notifications.html';
+        });
+      }
+
+      if (menuHome) {
+        menuHome.addEventListener('click', () => {
+          window.location.href = '/';
+        });
+      }
+
+      if (menuLogout) {
+        menuLogout.addEventListener('click', () => {
+          setAuthToken(null);
+          currentUser = null;
+          isAuthOpen = false;
+          closeMenu();
+          renderAuthState();
+        });
+      }
+
+      if (authCloseBtn) {
+        authCloseBtn.addEventListener('click', () => {
+          hideAuthPage();
+        });
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!isMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (accountMenu && accountMenu.contains(target)) return;
+        if (accountBtn && accountBtn.contains(target)) return;
+        closeMenu();
+      });
+
+      if (savePreferencesBtn) {
+        savePreferencesBtn.addEventListener('click', () => {
+          savePreferences();
+        });
+      }
+
+
+      loadCurrentUser();
+
+      // 設置地址輸入框高度與topic輸入框一致
+      function syncInputHeight() {
+        if (topicInput && addressInput) {
+          const topicHeight = topicInput.offsetHeight;
+          addressInput.style.height = topicHeight + 'px';
+        }
+      }
+      
+      // 初始化時同步高度
+      window.addEventListener('load', syncInputHeight);
+      setTimeout(syncInputHeight, 100);
+      
+      // 當窗口大小改變時重新同步
+      window.addEventListener('resize', syncInputHeight);
+
+      // 位置偵測功能
+      document.getElementById('detectLocation').addEventListener('click', async () => {
+        const btn = document.getElementById('detectLocation');
+        
+        btn.disabled = true;
+        btn.textContent = translations[currentLang]['detecting-location'];
+        
+        if (!navigator.geolocation) {
+          alert(translations[currentLang]['location-error']);
+          btn.disabled = false;
+          btn.textContent = translations[currentLang]['detect-location'];
+          return;
+        }
+        
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 10000,
+              enableHighAccuracy: false
+            });
+          });
+          
+          // 使用反向地理編碼 API
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=zoom=10&addressdetails=1&accept-language=en`
+          );
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const address = data.address;
+            let locationText = '';
+            
+            // 構建地址字符串
+            if (address.city || address.town || address.village) {
+              locationText = address.city || address.town || address.village;
+            }
+            if (address.state) {
+              locationText += locationText ? `, ${address.state}` : address.state;
+            }
+            if (address.country) {
+              locationText += locationText ? `, ${address.country}` : address.country;
+            }
+            
+            if (locationText) {
+              addressInput.value = locationText;
+              btn.textContent = translations[currentLang]['location-success'];
+            } else {
+              throw new Error('No location data');
+            }
+          } else {
+            throw new Error('No location data');
+          }
+        } catch (error) {
+          console.error('Location detection error:', error);
+          // Fallback: IP-based geolocation
+          try {
+            const ipRes = await fetch("https://ipapi.co/json/");
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              const parts = [];
+              if (ipData.city) parts.push(ipData.city);
+              if (ipData.region) parts.push(ipData.region);
+              if (ipData.country_name) parts.push(ipData.country_name);
+              const ipLocation = parts.join(", ");
+              if (ipLocation) {
+                addressInput.value = ipLocation;
+                btn.textContent = translations[currentLang]['location-success'];
+              } else {
+                alert(translations[currentLang]['location-error']);
+                btn.textContent = translations[currentLang]['detect-location'];
+              }
+            } else {
+              alert(translations[currentLang]['location-error']);
+              btn.textContent = translations[currentLang]['detect-location'];
+            }
+          } catch (ipError) {
+            console.error('IP-based location error:', ipError);
+            alert(translations[currentLang]['location-error']);
+            btn.textContent = translations[currentLang]['detect-location'];
+          }
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      // 表單提交
+      const form = document.getElementById("interestForm");
+      const newsList = document.getElementById("newsList");
+      const statusBox = document.getElementById("status");
+      const takeawaySection = document.getElementById("takeawaySection");
+      const thingsToWatch = document.getElementById("thingsToWatch");
+      const takeawayBox = document.getElementById("takeawayBox");
+      const aiDisabledNotice = document.getElementById("aiDisabledNotice");
+      const machineByline = document.getElementById("machineByline");
+      const sealBtn = form.querySelector('.seal');
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // LLM failures come back as "[... Error] ..." strings; treat them as no summary.
+      function usableTakeaway(t) {
+        if (!t || !t.things_to_watch || !t.takeaway) return null;
+        if (/^\[[^\]]*Error\]/.test(t.takeaway)) return null;
+        return t;
+      }
+
+      function splitPoints(text) {
+        return text.split('\n').map(line => line.replace(/^\s*\d+[.、)]\s*/, '').trim()).filter(Boolean);
+      }
+
+      // Google News titles end with " - Source"
+      function splitHeadline(title) {
+        const idx = title.lastIndexOf(' - ');
+        if (idx <= 0) return { headline: title, source: '' };
+        return { headline: title.slice(0, idx), source: title.slice(idx + 3) };
+      }
+
+      const dateline = document.getElementById("dateline");
+      if (dateline) {
+        dateline.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        // The backend resolves the country from the full location text
+        params.append('region', (formData.get('address') || '').trim());
+
+        // 其他參數
+        params.append('topic', formData.get('topic') || 'trending');
+        const presetSource = formData.get('presetSource') || '';
+        if (presetSource) {
+          params.append('presetId', presetSource);
+        }
+        params.append('lang', currentLang);
+
+
+        statusBox.textContent = translations[currentLang]["status-loading"];
+        statusBox.className = "status loading";
+        sealBtn.disabled = true;
+        newsList.innerHTML = "";
+        takeawaySection.style.display = "none";
+        aiDisabledNotice.style.display = "none";
+
+        try {
+          const response = await fetch(`/api/news?${params.toString()}`);
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.error || translations[currentLang]["error-fetch"]);
+          }
+
+          const { items, takeaways } = payload;
+
+          if (!items.length) {
+            statusBox.textContent = translations[currentLang]["status-no-news"];
+            statusBox.className = "status";
+            return;
+          }
+
+          statusBox.textContent = translations[currentLang]["status-count"].replace("{count}", items.length);
+          statusBox.className = "status";
+
+          // Parallel EN / 中文 digest
+          const en = usableTakeaway(takeaways && takeaways.en);
+          const zh = usableTakeaway(takeaways && takeaways.zh);
+          if (en || zh) {
+            const enPoints = en ? splitPoints(en.things_to_watch) : [];
+            const zhPoints = zh ? splitPoints(zh.things_to_watch) : [];
+            const rows = Math.max(enPoints.length, zhPoints.length);
+            thingsToWatch.innerHTML = Array.from({ length: rows }, (_, i) => `
+              <li class="point" style="--i:${i}">
+                <span class="point-num">${String(i + 1).padStart(2, '0')}</span>
+                <p class="en" lang="en">${escapeHtml(enPoints[i] || '')}</p>
+                <p class="zh" lang="zh-Hant">${escapeHtml(zhPoints[i] || '')}</p>
+              </li>
+            `).join('');
+            takeawayBox.innerHTML = `
+              <div class="kicker">Take Away · <span lang="zh-Hant">重點</span></div>
+              <blockquote lang="en">${escapeHtml(en ? en.takeaway : '')}</blockquote>
+              <blockquote lang="zh-Hant">${escapeHtml(zh ? zh.takeaway : '')}</blockquote>
+            `;
+            const compiledAt = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' });
+            machineByline.innerHTML = `<span class="dot">●</span> COMPILED BY MACHINE · ${escapeHtml(compiledAt)} · ${items.length} DISPATCHES READ`;
+            thingsToWatch.classList.remove('press');
+            void thingsToWatch.offsetWidth;
+            thingsToWatch.classList.add('press');
+            takeawaySection.style.display = "block";
+            aiDisabledNotice.style.display = "none";
+          } else {
+            aiDisabledNotice.style.display = "block";
+            takeawaySection.style.display = "none";
+          }
+
+          // The wire: source headlines
+          newsList.innerHTML = items
+            .map((item, i) => {
+              const { headline, source } = splitHeadline(item.title || '');
+              return `
+                <article class="news-item" style="--i:${i}">
+                  <div class="news-meta mono">
+                    ${source ? `<span class="src">${escapeHtml(source)}</span>` : ''}
+                    ${item.published ? `<span>${escapeHtml(item.published)}</span>` : ''}
+                  </div>
+                  <h3><a href="${escapeHtml(item.link || '#')}" target="_blank" rel="noopener">${escapeHtml(headline)}</a></h3>
+                </article>
+              `;
+            })
+            .join("");
+          newsList.classList.remove('press');
+          void newsList.offsetWidth;
+          newsList.classList.add('press');
+        } catch (error) {
+          console.error(error);
+          statusBox.textContent = error.message;
+          statusBox.className = "error";
+        } finally {
+          sealBtn.disabled = false;
+        }
+      });
+// ----- Dark mode toggle -----
+    function applyTheme(theme) {
+      const body = document.body;
+      if (theme === 'dark') {
+        body.classList.add('dark');
+      } else {
+        body.classList.remove('dark');
+      }
+      if (themeToggle) {
+        themeToggle.textContent = theme === 'dark' ? 'Day' : 'Night';
+      }
+    }
+
+    function initTheme() {
+      let theme = 'light';
+      try {
+        const stored = window.localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        } else {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
+        }
+      } catch (e) {
+        console.error('theme read error', e);
+      }
+      applyTheme(theme);
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+          const next = current === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          try {
+            window.localStorage.setItem(THEME_KEY, next);
+          } catch (e) {
+            console.error('theme save error', e);
+          }
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initTheme();
+        if (resetPanel) {
+          resetPanel.classList.remove('is-open');
+          resetPanel.hidden = true;
+        }
+        if (resetStatus) {
+          resetStatus.textContent = '';
+        }
+      } catch (e) {
+        console.error('initTheme error', e);
+      }
+    });
+</script>
+  </body>
+</html>

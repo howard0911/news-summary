@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Saved Preferences</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%226%22 fill=%22%23C2361C%22/></svg>" />
+    <link rel="stylesheet" href="digest.css" />
+    <style>
+      main > .card { max-width: 860px; }
+
+      .saved-pref-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .saved-pref-row strong {
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+      }
+
+      .saved-pref-row > div > div {
+        margin-top: 4px;
+        color: var(--ink-2);
+        font-family: var(--f-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-actions">
+      <div class="account-menu-wrapper">
+        <button class="account-btn" id="accountBtn" type="button">
+          <span class="account-avatar" id="accountAvatarBtn">U</span>
+          <span id="accountBtnLabel" data-i18n="nav-account">Account</span>
+          <span class="notif-badge" id="notificationBadge">0</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-header">
+            <div class="account-menu-name" id="menuUsername" data-i18n="menu-guest-title">Guest</div>
+            <div class="account-menu-email" id="menuEmail" data-i18n="menu-guest-subtitle">Sign in to manage your account.</div>
+          </div>
+          <div>
+            <button class="account-menu-item" id="menuHome" type="button" data-i18n="menu-home">Home</button>
+            <button class="account-menu-item" id="menuNotifications" type="button" data-i18n="menu-notifications">
+              Notifications
+              <span class="menu-badge" id="menuNotificationBadge">0</span>
+            </button>
+            <button class="account-menu-item" id="menuSavedPreferences" type="button" data-i18n="menu-saved-preferences">Saved Preferences</button>
+            <button class="account-menu-item" id="menuAccountSettings" type="button" data-i18n="menu-settings">Settings</button>
+            <div class="account-menu-controls">
+              <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en" data-i18n="lang-english">English</button>
+                <button class="lang-btn" data-lang="zh" data-i18n="lang-chinese">中文</button>
+              </div>
+              <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">Night</button>
+            </div>
+          </div>
+          <div class="account-menu-footer">
+            <button class="account-menu-item" id="menuLogout" type="button" data-i18n="menu-logout">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <h1 data-i18n="saved-preferences-title">Saved Preferences</h1>
+      <p data-i18n="saved-preferences-subtitle">Your latest saved settings.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+          <button class="btn-small" id="savePreferencesNow" type="button" data-i18n="saved-preferences-save">Save current preferences</button>
+        </div>
+        <div id="savedPreferencesContent"></div>
+        <div class="status" id="savedPreferencesStatus"></div>
+      </section>
+    </main>
+
+    <script>
+      const translations = {
+        en: {
+          "nav-account": "Account",
+          "menu-guest-title": "Guest",
+          "menu-guest-subtitle": "Sign in to manage your account.",
+          "menu-home": "Home",
+          "menu-notifications": "Notifications",
+          "menu-settings": "Settings",
+          "menu-saved-preferences": "Saved Preferences",
+          "menu-logout": "Log out",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "saved-preferences-title": "Saved Preferences",
+          "saved-preferences-subtitle": "Your latest saved settings.",
+          "saved-preferences-save": "Save current preferences",
+          "saved-preferences-empty": "No saved preferences.",
+          "saved-preferences-load-failed": "Failed to load preferences.",
+          "saved-preferences-save-failed": "Failed to save preferences.",
+          "saved-preferences-delete": "Delete"
+        },
+        zh: {
+          "nav-account": "帳號",
+          "menu-guest-title": "訪客",
+          "menu-guest-subtitle": "登入後才能管理帳號。",
+          "menu-home": "首頁",
+          "menu-notifications": "通知",
+          "menu-settings": "設定",
+          "menu-saved-preferences": "已存偏好",
+          "menu-logout": "登出",
+          "lang-english": "English",
+          "lang-chinese": "中文",
+          "saved-preferences-title": "已存偏好",
+          "saved-preferences-subtitle": "你最近儲存的設定。",
+          "saved-preferences-save": "儲存目前偏好",
+          "saved-preferences-empty": "目前沒有已存偏好。",
+          "saved-preferences-load-failed": "讀取偏好失敗。",
+          "saved-preferences-save-failed": "儲存偏好失敗。",
+          "saved-preferences-delete": "刪除"
+        }
+      };
+      const TOKEN_KEY = 'dailyDigestToken';
+      const THEME_KEY = 'dailyDigestTheme';
+      const LANG_KEY = 'dailyDigestLang';
+      const accountBtn = document.getElementById('accountBtn');
+      const accountBtnLabel = document.getElementById('accountBtnLabel');
+      const accountAvatarBtn = document.getElementById('accountAvatarBtn');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const menuNotificationBadge = document.getElementById('menuNotificationBadge');
+      const accountMenu = document.getElementById('accountMenu');
+      const menuHome = document.getElementById('menuHome');
+      const menuAccountSettings = document.getElementById('menuAccountSettings');
+      const menuSavedPreferences = document.getElementById('menuSavedPreferences');
+      const menuNotifications = document.getElementById('menuNotifications');
+      const themeToggle = document.getElementById('themeToggle');
+      const menuLogout = document.getElementById('menuLogout');
+      const menuUsername = document.getElementById('menuUsername');
+      const menuEmail = document.getElementById('menuEmail');
+      const savedPreferencesContent = document.getElementById('savedPreferencesContent');
+      const savedPreferencesStatus = document.getElementById('savedPreferencesStatus');
+      let isMenuOpen = false;
+      let currentLang = 'en';
+      let savedPreferencesCache = [];
+      let isAuthenticated = false;
+
+      function getAuthToken() {
+        try {
+          return window.localStorage.getItem(TOKEN_KEY);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setAuthToken(token) {
+        try {
+          if (token) {
+            window.localStorage.setItem(TOKEN_KEY, token);
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY);
+          }
+        } catch (e) {
+          console.error('auth token storage error', e);
+        }
+      }
+
+      function getDisplayName(email) {
+        if (!email) return '';
+        const parts = email.split('@');
+        return parts[0] || email;
+      }
+
+      function openMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        isMenuOpen = true;
+      }
+
+      function closeMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        isMenuOpen = false;
+      }
+
+      async function loadCurrentUser() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+        try {
+          const resp = await fetch('/api/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            setAuthToken(null);
+            window.location.href = '/';
+            return;
+          }
+          const data = await resp.json();
+          const user = data.user || {};
+          isAuthenticated = true;
+          const displayName = user.username || getDisplayName(user.email || '');
+          if (accountBtnLabel) accountBtnLabel.textContent = displayName || 'Account';
+          if (accountAvatarBtn) accountAvatarBtn.textContent = displayName[0]?.toUpperCase() || 'U';
+          if (menuUsername) menuUsername.textContent = displayName || 'Guest';
+          if (menuEmail) menuEmail.textContent = user.email || '';
+          loadNotificationBadge();
+        } catch (e) {
+          console.error('loadCurrentUser error', e);
+        }
+      }
+
+      async function loadNotificationBadge() {
+        const token = getAuthToken();
+        if (!token) {
+          updateNotificationBadge(0);
+          return;
+        }
+        try {
+          const resp = await fetch('/api/notifications', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            updateNotificationBadge(0);
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          const unread = items.filter(item => !item.read_at).length;
+          updateNotificationBadge(unread);
+        } catch (e) {
+          console.error('loadNotificationBadge error', e);
+          updateNotificationBadge(0);
+        }
+      }
+
+      function updateNotificationBadge(count) {
+        if (!notificationBadge) return;
+        if (count > 0) {
+          notificationBadge.textContent = count > 99 ? '99+' : String(count);
+          notificationBadge.style.display = 'inline-flex';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.textContent = count > 99 ? '99+' : String(count);
+            menuNotificationBadge.style.display = 'inline-flex';
+          }
+        } else {
+          notificationBadge.style.display = 'none';
+          if (menuNotificationBadge) {
+            menuNotificationBadge.style.display = 'none';
+          }
+        }
+      }
+
+      async function loadSavedPreferences() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+        const container = document.getElementById('savedPreferencesContent');
+        const status = document.getElementById('savedPreferencesStatus');
+        if (!container) return;
+        container.innerHTML = '';
+        try {
+          const resp = await fetch('/api/saved-preferences', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            if (status) status.textContent = translations[currentLang]['saved-preferences-load-failed'];
+            return;
+          }
+          const data = await resp.json();
+          const items = data.items || [];
+          savedPreferencesCache = items;
+          renderSavedPreferences();
+        } catch (e) {
+          console.error('loadSavedPreferences error', e);
+          if (status) status.textContent = translations[currentLang]['saved-preferences-load-failed'];
+        }
+      }
+
+      function renderSavedPreferences() {
+        const container = document.getElementById('savedPreferencesContent');
+        const status = document.getElementById('savedPreferencesStatus');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!savedPreferencesCache.length) {
+          if (status) status.textContent = translations[currentLang]['saved-preferences-empty'];
+          return;
+        }
+        if (status) status.textContent = '';
+        container.innerHTML = savedPreferencesCache
+          .map(item => {
+            const sources = Array.isArray(item.sources) ? item.sources.join(', ') : '-';
+            const created = item.created_at || '-';
+            return `
+              <div class="saved-pref-row" data-id="${item.id}">
+                <div>
+                  <strong>${item.topic || '-'}</strong>
+                  <div>${item.region || '-'} • ${item.lang || '-'} • ${sources}</div>
+                  <div>${created}</div>
+                </div>
+                <button class="btn-small" data-action="delete" data-id="${item.id}">${translations[currentLang]['saved-preferences-delete']}</button>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      const savePrefButton = document.getElementById('savePreferencesNow');
+      if (savePrefButton) {
+        savePrefButton.addEventListener('click', async () => {
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            const resp = await fetch('/api/saved-preferences', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({})
+            });
+            if (!resp.ok) {
+              if (savedPreferencesStatus) savedPreferencesStatus.textContent = translations[currentLang]['saved-preferences-save-failed'];
+              return;
+            }
+            loadSavedPreferences();
+          } catch (e) {
+            console.error('save preferences error', e);
+          }
+        });
+      }
+
+      if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+          if (isMenuOpen) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+      }
+
+      if (menuHome) {
+        menuHome.addEventListener('click', () => {
+          window.location.href = '/';
+        });
+      }
+
+      if (menuAccountSettings) {
+        menuAccountSettings.addEventListener('click', () => {
+          window.location.href = '/account.html';
+        });
+      }
+
+      if (menuSavedPreferences) {
+        menuSavedPreferences.addEventListener('click', () => {
+          window.location.href = '/preferences.html';
+        });
+      }
+
+      if (menuNotifications) {
+        menuNotifications.addEventListener('click', () => {
+          window.location.href = '/notifications.html';
+        });
+      }
+
+      const langButtons = document.querySelectorAll('.lang-btn');
+
+      function applyLangSelection(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+        try {
+          window.localStorage.setItem(LANG_KEY, lang);
+        } catch (e) {
+          console.error('lang save error', e);
+        }
+        langButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        updateTranslations();
+        renderSavedPreferences();
+      }
+
+      function initLanguage() {
+        let lang = 'en';
+        try {
+          const stored = window.localStorage.getItem(LANG_KEY);
+          if (stored === 'en' || stored === 'zh') {
+            lang = stored;
+          }
+        } catch (e) {
+          console.error('lang read error', e);
+        }
+        applyLangSelection(lang);
+      }
+
+      if (langButtons.length) {
+        langButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            applyLangSelection(btn.dataset.lang);
+          });
+        });
+      }
+
+      if (menuLogout) {
+        menuLogout.addEventListener('click', () => {
+          setAuthToken(null);
+          window.location.href = '/';
+        });
+      }
+
+      if (savedPreferencesContent) {
+        savedPreferencesContent.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const action = target.getAttribute('data-action');
+          const id = target.getAttribute('data-id');
+          if (action !== 'delete' || !id) return;
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            await fetch(`/api/saved-preferences/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            loadSavedPreferences();
+          } catch (e) {
+            console.error('delete preference error', e);
+          }
+        });
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!isMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (accountMenu && accountMenu.contains(target)) return;
+        if (accountBtn && accountBtn.contains(target)) return;
+        closeMenu();
+      });
+
+      function updateTranslations() {
+        const skipKeysWhenAuthed = new Set([
+          'nav-account',
+          'menu-guest-title',
+          'menu-guest-subtitle'
+        ]);
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (isAuthenticated && skipKeysWhenAuthed.has(key)) {
+            return;
+          }
+          if (translations[currentLang][key]) {
+            el.textContent = translations[currentLang][key];
+          }
+        });
+      }
+
+      function applyTheme(theme) {
+        const body = document.body;
+        if (theme === 'dark') {
+          body.classList.add('dark');
+        } else {
+          body.classList.remove('dark');
+        }
+        if (themeToggle) {
+          themeToggle.textContent = theme === 'dark' ? 'Day' : 'Night';
+        }
+      }
+
+      function initTheme() {
+        let theme = 'light';
+        const stored = window.localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        }
+        applyTheme(theme);
+        if (themeToggle) {
+          themeToggle.addEventListener('click', () => {
+            const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            window.localStorage.setItem(THEME_KEY, next);
+          });
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        initLanguage();
+        loadCurrentUser();
+        loadSavedPreferences();
+      });
+    </script>
+  </body>
+</html>
