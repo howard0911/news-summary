@@ -10,32 +10,31 @@
       /* ---------- Masthead ---------- */
       .masthead { padding-top: 20px; padding-bottom: 0; }
 
-      .wire-strip {
+      .topline {
         display: flex;
-        flex-wrap: wrap;
-        gap: 4px 16px;
         min-height: 36px;
         align-items: center;
         padding-right: 200px;
         color: var(--ink-2);
+        font-size: 14px;
       }
 
       .nameplate {
-        margin-top: 40px;
-        font-size: clamp(56px, 10vw, 120px);
-        line-height: 0.92;
+        margin-top: 32px;
+        font-size: clamp(40px, 6vw, 64px);
+        line-height: 0.95;
         font-weight: 650;
-        letter-spacing: -0.055em;
+        letter-spacing: -0.04em;
       }
 
       .nameplate-zh {
         display: block;
-        margin-top: 12px;
+        margin-top: 10px;
         font-family: var(--f-zh);
-        font-size: clamp(22px, 3vw, 32px);
+        font-size: clamp(18px, 2.2vw, 22px);
         line-height: 1.2;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         color: var(--ink-2);
       }
 
@@ -47,56 +46,20 @@
         max-width: none;
       }
 
-      /* ---------- Edition sentence ---------- */
+      /* ---------- Edition form ---------- */
       .edition { padding-top: 40px; padding-bottom: 48px; border-bottom: 1px solid var(--rule); }
 
-      .edition-row {
+      .fields {
         display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 32px;
+        grid-template-columns: 1.2fr 1.2fr 1fr auto;
+        gap: 16px;
         align-items: end;
       }
 
-      .sentence {
-        margin-top: 16px;
-        font-size: clamp(26px, 3.6vw, 40px);
-        line-height: 1.3;
-        font-weight: 400;
-        letter-spacing: -0.02em;
-        max-width: 26em;
-      }
+      .f { min-width: 0; }
 
-      .sentence .field {
-        display: inline-block;
-        width: auto;
-        min-width: 4ch;
-        max-width: 100%;
-        field-sizing: content;
-        margin: 0;
-        padding: 0 2px;
-        border: 0;
-        border-bottom: 2px solid var(--accent);
-        border-radius: 0;
-        background: transparent;
-        color: var(--ink);
-        font: inherit;
-        font-weight: 600;
-        letter-spacing: inherit;
-        vertical-align: baseline;
-        transition: background-color 150ms ease;
-      }
-
-      .sentence select.field {
-        appearance: none;
-        cursor: pointer;
-        padding-right: 2px;
-      }
-
-      .sentence select.field option { font-size: 16px; font-weight: 400; }
-
-      .sentence .field:focus { outline: none; background: var(--wash); }
-
-      .sentence .field::placeholder { color: var(--ink-3); font-weight: 400; }
+      .f input,
+      .f select { height: 48px; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
 
       .edition-tools {
         display: flex;
@@ -108,44 +71,42 @@
 
       .helper-text { color: var(--ink-3); font-size: 14px; }
 
-      .pref-status { color: var(--ink-2); }
+      .pref-status { color: var(--ink-2); font-size: 14px; }
 
-      /* ---------- Seal button ---------- */
-      .seal {
-        width: 112px;
-        height: 112px;
-        flex: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        border-radius: 6px;
+      /* ---------- Primary action: 產生今日摘要 ---------- */
+      .btn-go {
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 2px;
         background: var(--accent);
         color: var(--accent-ink);
-        box-shadow: inset 0 0 0 3px var(--accent), inset 0 0 0 5px var(--accent-ink);
-        transform: rotate(-3deg);
-        transition: transform 120ms ease;
-      }
-
-      .seal:hover { transform: rotate(-3deg) scale(1.03); }
-      .seal:active { transform: rotate(-3deg) scale(0.97); }
-      .seal:disabled { opacity: 0.6; cursor: progress; }
-
-      .seal-zh {
-        font-family: var(--f-zh);
-        font-size: 28px;
-        font-weight: 700;
-        line-height: 1;
-        letter-spacing: 0.05em;
-      }
-
-      .seal-en {
-        font-family: var(--f-mono);
-        font-size: 10px;
+        font-size: 16px;
         font-weight: 600;
-        letter-spacing: 0.12em;
+        letter-spacing: -0.005em;
+        white-space: nowrap;
+        transition: background-color 120ms ease, transform 100ms ease;
       }
+
+      .btn-go:hover { background: var(--accent-hover); }
+      .btn-go:active { transform: scale(0.98); }
+      .btn-go:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+      .btn-go:disabled { opacity: 0.75; cursor: progress; }
+
+      .spin {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        margin-right: 8px;
+        vertical-align: -2px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 9999px;
+        animation: spin 700ms linear infinite;
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 
       /* ---------- Digest: parallel EN / 中文 ---------- */
       .digest { padding-top: 56px; }
@@ -181,6 +142,8 @@
       }
 
       .col-heads {
+        font-size: 14px;
+        font-weight: 500;
         padding-bottom: 8px;
         border-bottom: 1px solid var(--rule-strong);
         color: var(--ink-2);
@@ -352,6 +315,10 @@
       @media (max-width: 899px) {
         .col-heads { display: none; }
 
+        .fields { grid-template-columns: 1fr 1fr; }
+
+        .fields .btn-go { grid-column: 1 / -1; width: 100%; }
+
         .point {
           grid-template-columns: 52px 1fr;
           column-gap: 12px;
@@ -371,9 +338,9 @@
       }
 
       @media (max-width: 719px) {
-        .wire-strip { padding-right: 0; padding-top: 52px; }
+        .topline { padding-right: 0; padding-top: 52px; }
         .nameplate { margin-top: 24px; }
-        .edition-row { grid-template-columns: 1fr; gap: 24px; }
+        .fields { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -465,9 +432,8 @@
 
     <div id="mainContent">
       <header class="masthead">
-        <div class="wire-strip mono">
+        <div class="topline">
           <span id="dateline"></span>
-          <span>EN · <span lang="zh-Hant">中文</span></span>
         </div>
         <h1 class="nameplate"><span>Daily Digest</span><span class="nameplate-zh" lang="zh-Hant">每日摘要</span></h1>
         <p class="deck" data-i18n="subtitle">Get your daily news summary in seconds</p>
@@ -476,31 +442,30 @@
       <main>
       <section class="edition">
         <form id="interestForm">
-          <div class="kicker" data-i18n="edition-kicker">Today's edition</div>
-          <div class="edition-row">
-            <p class="sentence">
-              <span data-i18n="sentence-the">The</span>
-              <label for="topic" class="sr-only" data-i18n="topic-label">What news topics interest you?</label>
+          <div class="fields">
+            <div class="f">
+              <label for="topic" data-i18n="topic-label">Topic</label>
               <input
                 id="topic"
                 name="topic"
-                class="field"
                 data-i18n-placeholder="topic-placeholder"
                 placeholder="Technology"
                 required
               />
-              <span data-i18n="sentence-edition">edition, for</span>
-              <label for="address" class="sr-only" data-i18n="address-label">Location (City, State/Province, Country)</label>
+            </div>
+            <div class="f">
+              <label for="address" data-i18n="address-label">Location</label>
               <input
                 id="address"
                 name="address"
-                class="field"
                 data-i18n-placeholder="address-placeholder"
                 placeholder="Chicago, USA"
                 required
-              /><span data-i18n="sentence-from">, from</span>
-              <label for="presetSource" class="sr-only" data-i18n="source-label">Source</label>
-              <select id="presetSource" name="presetSource" class="field">
+              />
+            </div>
+            <div class="f">
+              <label for="presetSource" data-i18n="source-label">Source</label>
+              <select id="presetSource" name="presetSource">
                 <option value="">Google News</option>
                 <option value="bbc_world">BBC News - World</option>
                 <option value="cnn_world">CNN - World</option>
@@ -522,17 +487,14 @@
                 <option value="reddit_worldnews">Reddit - r/worldnews</option>
                 <option value="google_top">Google News - Top stories</option>
                 <option value="politico_playbook">Politico - Playbook</option>
-              </select><span data-i18n="sentence-end">.</span>
-            </p>
-            <button type="submit" class="seal" aria-label="Generate Daily Digest">
-              <span class="seal-zh" lang="zh-Hant">付印</span>
-              <span class="seal-en">GO TO PRESS</span>
-            </button>
+              </select>
+            </div>
+            <button type="submit" class="btn-go" id="generateBtn" data-i18n="submit-btn">Get today's digest</button>
           </div>
           <div class="edition-tools">
             <button type="button" class="btn-ghost" id="detectLocation" data-i18n="detect-location">Detect my location</button>
             <button type="button" class="btn-ghost" id="savePreferences" data-i18n="save-preferences">Save Preferences</button>
-            <span class="pref-status mono" id="prefStatus" data-i18n="pref-status-idle">Save your preferences after you sign in.</span>
+            <span class="pref-status" id="prefStatus" data-i18n="pref-status-idle">Save your preferences after you sign in.</span>
           </div>
         </form>
       </section>
@@ -546,7 +508,7 @@
           <h2>Things to Watch Today</h2>
           <span class="h-zh" lang="zh-Hant">今天需要注意的事情</span>
         </div>
-        <div class="col-heads mono" aria-hidden="true"><span>English</span><span lang="zh-Hant">中文</span></div>
+        <div class="col-heads" aria-hidden="true"><span>English</span><span lang="zh-Hant">中文</span></div>
         <ol class="points" id="thingsToWatch"></ol>
         <div class="takeaway" id="takeawayBox"></div>
         <div class="byline mono" id="machineByline"></div>
@@ -635,24 +597,20 @@
           "account-password-mismatch": "新密碼不一致。",
           "account-password-success": "密碼已更新。",
           "account-password-error": "更新密碼失敗。",
-          "topic-label": "您對哪些新聞主題感興趣？",
+          "topic-label": "主題",
           "topic-placeholder": "科技",
-          "address-label": "位置（城市、州/省、國家）",
+          "address-label": "地點",
           "address-placeholder": "台北，台灣",
           "address-helper": "請輸入位置或點擊自動偵測",
           "detect-location": "偵測我的位置",
-          "edition-kicker": "今日版",
-          "sentence-the": "今日",
-          "sentence-edition": "版・地點",
-          "sentence-from": "・來源",
-          "sentence-end": "。",
           "source-label": "新聞來源",
           "detecting-location": "正在偵測位置...",
           "location-error": "無法偵測位置，請手動輸入。",
           "location-success": "位置已偵測！",
           "url-label": "自訂 RSS / 新聞網址（選填）",
           "url-placeholder": "例如：https://example.com/rss",
-          "submit-btn": "生成每日摘要",
+          "submit-btn": "產生今日摘要",
+          "submit-loading": "產生中…",
           "helper-text": "正在獲取過去24小時的最新新聞...",
           "status-default": "請提交表單以獲取您的每日摘要。",
           "status-loading": "正在獲取最新新聞...",
@@ -731,24 +689,20 @@
           "account-password-mismatch": "Passwords do not match.",
           "account-password-success": "Password updated.",
           "account-password-error": "Failed to update password.",
-          "topic-label": "What news topics interest you?",
+          "topic-label": "Topic",
           "topic-placeholder": "Technology",
-          "address-label": "Location (City, State/Province, Country)",
+          "address-label": "Location",
           "address-placeholder": "Chicago, USA",
           "address-helper": "Enter your location or click to detect automatically",
           "detect-location": "Detect my location",
-          "edition-kicker": "Today's edition",
-          "sentence-the": "The",
-          "sentence-edition": "edition, for",
-          "sentence-from": ", from",
-          "sentence-end": ".",
           "source-label": "Source",
           "detecting-location": "Detecting location...",
           "location-error": "Unable to detect location. Please enter manually.",
           "location-success": "Location detected!",
           "url-label": "Custom RSS / News URL (Optional)",
           "url-placeholder": "e.g., https://example.com/rss",
-          "submit-btn": "Generate Daily Digest",
+          "submit-btn": "Get today's digest",
+          "submit-loading": "Generating…",
           "helper-text": "Fetching latest news from the past 24 hours...",
           "status-default": "Please submit the form to get your daily digest.",
           "status-loading": "Fetching latest news…",
@@ -767,8 +721,16 @@
       const THEME_KEY = 'dailyDigestTheme';
       let currentUser = null;
 
+      function renderDateline() {
+        const dateline = document.getElementById("dateline");
+        if (!dateline) return;
+        const locale = currentLang === 'zh' ? 'zh-TW' : 'en-US';
+        dateline.textContent = new Date().toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
       function updateLanguage(lang) {
         currentLang = lang;
+        renderDateline();
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (currentUser && key === 'nav-login') {
@@ -1465,7 +1427,7 @@
       const takeawayBox = document.getElementById("takeawayBox");
       const aiDisabledNotice = document.getElementById("aiDisabledNotice");
       const machineByline = document.getElementById("machineByline");
-      const sealBtn = form.querySelector('.seal');
+      const generateBtn = document.getElementById('generateBtn');
 
       function escapeHtml(text) {
         return String(text)
@@ -1494,10 +1456,7 @@
         return { headline: title.slice(0, idx), source: title.slice(idx + 3) };
       }
 
-      const dateline = document.getElementById("dateline");
-      if (dateline) {
-        dateline.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-      }
+      renderDateline();
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1518,7 +1477,8 @@
 
         statusBox.textContent = translations[currentLang]["status-loading"];
         statusBox.className = "status loading";
-        sealBtn.disabled = true;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `<span class="spin" aria-hidden="true"></span>${escapeHtml(translations[currentLang]["submit-loading"])}`;
         newsList.innerHTML = "";
         takeawaySection.style.display = "none";
         aiDisabledNotice.style.display = "none";
@@ -1596,7 +1556,8 @@
           statusBox.textContent = error.message;
           statusBox.className = "error";
         } finally {
-          sealBtn.disabled = false;
+          generateBtn.disabled = false;
+          generateBtn.textContent = translations[currentLang]["submit-btn"];
         }
       });
 // ----- Dark mode toggle -----

@@ -1206,6 +1206,8 @@ Please respond in English in the following format:
 
     out = ask_llm(messages, max_tokens=500, temperature=0.7)
     if out and not out.startswith("[Error]") and not out.startswith("[Ollama Error]") and not out.startswith("[OpenAI Error]") and not out.startswith("[Groq Error]") and not out.startswith("[Groq Fallback Error]"):
+        # The UI renders plain text, so drop Markdown bold markers the model sometimes adds
+        out = out.replace("**", "")
         # Try to parse sections
         if lang.startswith("zh"):
             things_to_watch = extract_section(out, "今天需要注意的事情")
