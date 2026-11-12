@@ -407,7 +407,11 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            return resp.choices[0].message.content
+            content = resp.choices[0].message.content
+            if not content:
+                # Reasoning models can spend the whole token budget thinking and return no answer
+                raise ValueError(f"empty completion (finish_reason={resp.choices[0].finish_reason}, max_tokens={max_tokens})")
+            return content
         except Exception as e:
             prefix = "[Groq Error]" if provider["provider"] == "groq" else "[OpenAI Error]"
             # Fall back to local Ollama when the cloud provider fails
@@ -1204,7 +1208,8 @@ Please respond in English in the following format:
 
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
-    out = ask_llm(messages, max_tokens=500, temperature=0.7)
+    # Budget covers the reasoning tokens of models like gpt-oss on top of the ~300-token answer
+    out = ask_llm(messages, max_tokens=2000, temperature=0.7)
     if out and not out.startswith("[Error]") and not out.startswith("[Ollama Error]") and not out.startswith("[OpenAI Error]") and not out.startswith("[Groq Error]") and not out.startswith("[Groq Fallback Error]"):
         # The UI renders plain text, so drop Markdown bold markers the model sometimes adds
         out = out.replace("**", "")
