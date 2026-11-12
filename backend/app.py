@@ -207,6 +207,8 @@ except ImportError:
 # Ollama local URL and default model (you confirmed these)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+# Longer timeout when Ollama is the fallback: the model may need a cold load into VRAM first
+OLLAMA_FALLBACK_TIMEOUT = 90.0
 
 # OpenAI config (optional, used if Ollama not available)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -215,7 +217,7 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # optional (e.g., proxy)
 # Groq config (OpenAI-compatible API, recommended free tier)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "meta-llama/llama-guard-4-12b")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 # Native OpenAI model name (if you decide to use real OpenAI)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -338,6 +340,19 @@ def _parse_ollama_response(resp_json: Dict) -> str:
     return json.dumps(resp_json)
 
 
+def ask_ollama(model: str, messages: List[Dict], max_tokens: int, temperature: float, timeout: float) -> str:
+    """Send a chat completion to local Ollama; raises on HTTP or connection errors."""
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
+    r.raise_for_status()
+    return _parse_ollama_response(r.json())
+
+
 def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.7, timeout: float = 30.0) -> str:
     """
     messages: list of {"role":"system|user|assistant", "content": "..."}
@@ -350,17 +365,8 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
 
     # ---------- Ollama ----------
     if provider["provider"] == "ollama":
-        payload = {
-            "model": provider["model"],
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
         try:
-            r = requests.post(f"{OLLAMA_URL}/chat/completions", json=payload, timeout=timeout)
-            r.raise_for_status()
-            resp_json = r.json()
-            return _parse_ollama_response(resp_json)
+            return ask_ollama(provider["model"], messages, max_tokens, temperature, timeout)
         except Exception as e:
             # If Ollama fails, try Groq first, then OpenAI
             print("Ollama request failed:", e)
@@ -404,7 +410,14 @@ def ask_llm(messages: List[Dict], max_tokens: int = 500, temperature: float = 0.
             return resp.choices[0].message.content
         except Exception as e:
             prefix = "[Groq Error]" if provider["provider"] == "groq" else "[OpenAI Error]"
-            return f"{prefix} {e}"
+            # Fall back to local Ollama when the cloud provider fails
+            print("Cloud LLM request failed, falling back to Ollama:", {"provider": provider["provider"], "model": model, "error": str(e), "ollama_model": OLLAMA_MODEL})
+            if not is_ollama_available():
+                return f"{prefix} {e} | [Ollama Fallback Error] Ollama is not running at {OLLAMA_URL}"
+            try:
+                return ask_ollama(OLLAMA_MODEL, messages, max_tokens, temperature, OLLAMA_FALLBACK_TIMEOUT)
+            except Exception as oe:
+                return f"{prefix} {e} | [Ollama Fallback Error] {oe}"
 
     return "[Error] Unknown provider flow"
 

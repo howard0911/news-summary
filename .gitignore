@@ -1,0 +1,24 @@
+# Secrets
+.env
+.env.*
+!config.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local database (contains user accounts and password hashes)
+*.db
+*.sqlite3
+
+# Local tool state and logs
+.gstack/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
